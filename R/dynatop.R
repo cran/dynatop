@@ -1,7 +1,7 @@
 #' R6 Class for Dynamic TOPMODEL
 #' @examples
 #' ## the vignettes contains further details of the method calls.
-#' 
+#'
 #' data("Swindale") ## example data
 #' ctch_mdl <- dynatop$new(Swindale$model) ## create with model
 #' ctch_mdl$add_data(Swindale$obs) ## add observations
@@ -20,7 +20,7 @@ dynatop <- R6Class(
         #'
         #' @return invisible(self) suitable for chaining
         #'
-        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
+        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, use_states=FALSE, delta = 1e-13){
             ## digest model with checks - will fail if errors identified
             private$digest_model(model,use_states,delta)
@@ -47,14 +47,14 @@ dynatop <- R6Class(
             private$time_series <- list()
             private$info$ts <- list()
         },
-        #' @description Initialises a dynatop object in the simpliest way possible.
+        #' @description Initialises a dynatop object in the most simple way possible.
         #'
         #' @param tol tolerance for the solution for the saturated zone
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
         #'
         #' @return invisible(self) suitable for chaining
         initialise = function(tol = 2*.Machine$double.eps, max_it = 1000){
-                       
+
             private$init_hs(tol,max_it)
             private$init_ch()
             invisible(self)
@@ -62,21 +62,24 @@ dynatop <- R6Class(
         #' @description Simulate the hillslope output of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param tol tolerance for the solution for the saturated zone
+        #' @param tol tolerance on width of bounds in the solution for the saturated zone
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
+        #' @param ftol tolerance in closeness to 0 in the solution for the saturated zone
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(keep_states=NULL,sub_step=NULL,tol = 2*.Machine$double.eps, max_it = 1000){
+        #' While ftol is implemented it is currently set to \code{Inf} to mimic the behaviour of previous versions. This will change in the future.
+        #'
+        #' @return invisible(self) for chaining
+        sim_hillslope = function(keep_states=NULL,sub_step=NULL,tol = 2*.Machine$double.eps, max_it = 1000, ftol= Inf){
 
             ## check the solver options
-            tol <- as.double(tol)
-            if(tol < .Machine$double.eps){
-                stop("Toleerance is set lower then machine eps")
+            tol <- as.double(tol); ftol <- as.double(ftol)
+            if(any( c(tol,ftol) < .Machine$double.eps)){
+                stop("A solution tolerance is set lower then machine eps")
             }
-            
             max_it <- as.integer(max_it)
             if(max_it < 10){stop("Please use at least 10 iterations")}
-             
+
             ## check presence of finite states
             sv <- c("s_sf","s_rz","s_uz","s_sz")
             has_states <- all(sapply(private$model$hillslope[,sv],
@@ -84,16 +87,16 @@ dynatop <- R6Class(
             if( !has_states ){
                 stop("Model states are either not initialised or have non-finite values")
             }
-            
+
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
             }
-            
+
             ## check presense of obs
             if( length(private$time_series$index) < 2 ){
                 stop("Insufficent data to perform a simulation")
             }
-            
+
             ## check keep_states is valid
             if( length(keep_states)>0 ){
                 if( !("POSIXct" %in% class(keep_states)) ){
@@ -101,20 +104,20 @@ dynatop <- R6Class(
                 }
             }
             keep_states <- keep_states[keep_states %in% private$time_series$index]
-                        
+
             ## simulate
-            private$sim_hs(keep_states,sub_step[1],tol,max_it)
+            private$sim_hs(keep_states,sub_step[1],tol,max_it,ftol)
 
             invisible(self)
         },
         #' @description Simulate the channel output of a dynatop object
         #' @return invisible(self) for chaining
         sim_channel=function(){
-           
+
             if(!private$info$can_solve_channel){
                 stop("Cannot simulate channel - check connectivity")
             }
-            
+
             ## check presence of channel_inflow
             if( nrow(private$time_series$channel_inflow$surface) !=
                 length(private$time_series$index) ){
@@ -132,17 +135,18 @@ dynatop <- R6Class(
 
             invisible(self)
         },
-        #' @description Simulate the hillslope and channel componets of a dynatop object
+        #' @description Simulate the hillslope and channel components of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
-        #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
+        #' @param mass_check Flag indicating is a record of mass balance errors should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param tol tolerance for the solution for the saturated zone
+        #' @param tol tolerance on width of bounds in the solution for the saturated zone
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
+        #' @param ftol tolerance in closeness to 0 in the solution for the saturated zone
         #'
         #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
-        sim = function(keep_states=NULL,sub_step=NULL,tol=2*.Machine$double.eps,max_it=1000){
+        sim = function(keep_states=NULL,sub_step=NULL,tol=2*.Machine$double.eps,max_it=1000,ftol=Inf){
             self$sim_hillslope(keep_states,sub_step,tol,max_it)
             self$sim_channel()
             invisible(self)
@@ -175,24 +179,34 @@ dynatop <- R6Class(
         plot_channel_inflow = function(total=FALSE,separate=FALSE){
             x <- self$get_channel_inflow(total,separate)
             if(total){
-                lloc <- NULL
                 if(separate){
                     x <- merge(x$surface,x$saturated)
                     names(x) = c("surface","saturated")
                     lloc <- "topright"
+                    plot(x,main="Channel Inflow",legend.loc=lloc)
+                }else{
+                    lloc <- NULL
+                    plot(x,main="Channel Inflow",legend.loc=lloc)
                 }
-                plot(x,main="Channel Inflow",legend.loc=lloc)
             }else{
-                oldpar <- par(no.readonly = TRUE)
-                on.exit(par(oldpar))
-                par(mfrow=c(2,1))
-                plot(x$surface,main="Channel Inflow: surface",legend.loc=lloc)
-                plot(x$saturated,main="Channel Inflow: saturated",legend.loc=lloc)
+                if(separate){
+                    lloc <- "topright"
+                    oldpar <- par(no.readonly = TRUE)
+                    on.exit(par(oldpar))
+                    par(mfrow=c(2,1))
+                    ## print seems to make this work....
+                    print(plot(x$surface,main="Channel Inflow: surface",legend.loc=lloc,on=1))
+                    print(plot(x$saturated,main="Channel Inflow: saturated",legend.loc=lloc,on=2))
+                }else{
+                    lloc <- "topright"
+                    plot(x,main="Channel Inflow",legend.loc=lloc)
+                }
+
             }
         },
         #' @description Return flow at the gauges as an xts series
         #' @param gauge names of gauges to return (default is all gauges)
-        get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){           
+        get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
             gauge <- match.arg(gauge,colnames(private$time_series$gauge_flow),
                                several.ok=TRUE)
             xts::xts(private$time_series$gauge_flow[,gauge,drop=FALSE],
@@ -223,7 +237,7 @@ dynatop <- R6Class(
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise the current states returned
         get_states = function(record=FALSE){
-            
+
             if( record ){
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
@@ -236,37 +250,37 @@ dynatop <- R6Class(
        #' @param state the name of the state to be plotted
        #' @param add_channel Logical indicating if the channel should be added to the plot
        plot_state = function(state,add_channel=TRUE){
-           
+
            if( is.null(private$model$map$hillslope) ){
                stop("The model contains no map of HSU locations")
            }
            if( !file.exists(private$model$map$hillslope) ){ stop("The model map file is missing") }
            if( add_channel & !file.exists(private$model$map$channel) ){ warnings("File containing the channel network does not exist") }
-           
+
            if(!(state%in%colnames(private$model$hillslope))){
                stop("Model state does not exist")
            }
 
-           
+
            if( !requireNamespace("raster",quietly=TRUE) ){
                stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
            }
-           
+
            rst <- raster::raster(private$model$map$hillslope)
            rst <- raster::subs(rst, private$model$hillslope[,c("id",state)])
-           
+
            raster::plot( rst)
            if( add_channel & file.exists(private$model$map$channel) ){
                chn <- raster::shapefile(private$model$map$channel)
                raster::plot(chn,add=TRUE)
            }
-           
+
        }
-       
+
     ),
     private = list(
         ## stores of data
-        version = "0.2.1",
+        version = "0.2.2",
         model = list(), # storage for model object
         summary = list(), # storage for intermediate computed values used in code
         time_series = list(),
@@ -287,6 +301,8 @@ dynatop <- R6Class(
                 "area" = list(class = "numeric", opt = "all", min=0, max=Inf),
                 "width" = list(class = "numeric", opt = "all", min=0, max=Inf),
                 "opt" = list(class = "character", opt = "all", min=0, max=Inf),
+                "s_raf" = list(class = "numeric", opt = "all", min=0, max=Inf),
+                "t_raf" = list(class = "numeric", opt = "all", min=0, max=Inf),
                 "r_sfmax" = list(class = "numeric", opt = "all", min=0, max=Inf),
                 "c_sf" = list(class = "numeric", opt = "all", min=0, max=Inf),
                 "s_rzmax" = list(class = "numeric", opt = "all", min=0, max=Inf),
@@ -368,7 +384,7 @@ dynatop <- R6Class(
             }
             ## catch case where table has no rows but correct structure
             if( nrow(tbl)==0 ){return(tbl)}
-            
+
             ## loop columns
             str <- ""
             idx <- 1:nrow(tbl)
@@ -403,9 +419,9 @@ dynatop <- R6Class(
                                          sep="\n")
                         }
                     }
-                    
+
                     tbl[[ii]][!idx] <- NA
-                    
+
                 }else{
                     ## add message to string
                     str <- paste(str,
@@ -413,7 +429,7 @@ dynatop <- R6Class(
                                  sep="\n")
                 }
             }
-            
+
             if(nchar(str)>0){
                 str <- paste(paste("table",lbl,"has the following errors:"),
                              str,sep="\n")
@@ -423,11 +439,11 @@ dynatop <- R6Class(
         },
         ## this code checks and digests the model
         digest_model = function(model, use_states, delta=1e-13){
-            
+
             ## initialise store of required data series names
             req_names <- list(output_label = list(),
                               data_series = list())
-            
+
 
             ## check all components of the model exist
             components <- names(private$model_description)
@@ -530,7 +546,7 @@ dynatop <- R6Class(
             ## sort flow direction - this is required
             private$model$flow_direction <-
                 model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),]
-            
+
             ## #############################################
             ## Check precip_input
             ## #############################################
@@ -554,7 +570,7 @@ dynatop <- R6Class(
             idx <- tmpp %in% names(tmp)
             if(!all(idx)){
                 warning(paste0("The following HRUs do not receive precipitation and have area greater then 0: "),
-                        paste(ttmp[!idx],collapse=", "))
+                        paste(tmpp[!idx],collapse=", "))
             }
             ## sort - not needed but might help speed?
             model$precip_input <-
@@ -653,7 +669,7 @@ dynatop <- R6Class(
             ## unpack the required names to vectors
             for(jj in names(req_names)){
                 req_names[[jj]] <- do.call(c,req_names[[jj]])
-            }           
+            }
             ## check all output series have unique names
             if( length(req_names$output_names) != length(unique(req_names$output_names)) ){
                 stop("All output series should have a unique name")
@@ -667,7 +683,7 @@ dynatop <- R6Class(
                 warning("The following maps are missing:\n",
                         paste(names(tmp[!tmp]),collapse=", "))
             }
-            
+
             ## ########################################################
             ## if we have passed all tests and can store the model
             ## But first do things that require reversing in reform model
@@ -676,7 +692,7 @@ dynatop <- R6Class(
             ## set D for exp and dexp options
             ## this is used in the c++ as the upper search limit
             model$hillslope$D[ model$hillslope$opt %in% c("exp","dexp") ] <- 1e32
-            
+
             ## convert hillslope opt into integer values
             tmp <- c("exp"=1,"cnst"=2,"bexp"=3,"dexp"=4)
             model$hillslope$opt <- as.integer(tmp[model$hillslope$opt])
@@ -692,14 +708,14 @@ dynatop <- R6Class(
 
             ## return
             invisible( self )
-            
+
         },
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
         reform_model = function(){
-            
+
             model <- private$model
-            
+
             ## ######################################################
             ## Udo dirty conversion of the hillslope table values
             ## ######################################################
@@ -708,9 +724,9 @@ dynatop <- R6Class(
             model$hillslope$opt <- tmp[model$hillslope$opt]
             ## change D back to NA
             model$hillslope$D[ model$hillslope$opt %in% c("exp","dexp") ] <- NA
-            
+
             return(model)
-        },        
+        },
         ## check and add obsservations
         check_obs = function(obs){
             req_series <- private$info$data_series
@@ -718,7 +734,7 @@ dynatop <- R6Class(
             ## check types
             if(!is.xts(obs)){ stop("observations should be an xts object") }
             if(!is.vector(req_series) | !all(sapply(req_series,class)=='character') ){ stop("req_series should be a character vector") }
-            
+
             ## check we have all the series needed
             if( !all( req_series %in% names(obs) ) ){
                 stop("Missing input series:",setdiff( req_series , names(obs) ))
@@ -729,7 +745,7 @@ dynatop <- R6Class(
             if( !all( tmp == tmp[1] ) ){
                 stop("Time steps in data are not unique")
             }
-            
+
             ## check all values are finite
             if( !all(is.finite(obs[,req_series])) ){
                 stop("There are non finite values in the required time series")
@@ -761,7 +777,7 @@ dynatop <- R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(tol,max_it){
-            
+
             dt_init(private$model$hillslope,
                     private$model$channel,
                     private$model$flow_direction,
@@ -771,8 +787,8 @@ dynatop <- R6Class(
         },
         ## ###############################
         ## function to perform simulations
-        sim_hs = function(keep_states,sub_step,tol,max_it){
-           
+        sim_hs = function(keep_states,sub_step,tol,max_it,ftol){
+          
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
@@ -782,7 +798,7 @@ dynatop <- R6Class(
             ## work out the courant numbers
             courant <- matrix(as.numeric(NA),length(private$model$hillslope$id),2)
             dt_courant(private$model$hillslope,courant,ts$step,ts$n_sub_step)
-            
+
             ## Display number of sub steps required
             if( any(courant[,1]>0.7) ){
                 warning("Courant number for surface zone is over 0.7\n",
@@ -796,7 +812,7 @@ dynatop <- R6Class(
                         round( min( (0.7/courant[,2]) * (ts$step/ts$n_sub_step) ),2 ),
                         "seconds")
             }
-            
+
 
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
@@ -819,7 +835,7 @@ dynatop <- R6Class(
                 saturated = matrix(as.numeric(NA),
                                    nrow(private$time_series$obs),
                                    length(private$model$channel$id)))
-            
+
             colnames(private$time_series$channel_inflow$surface) <-
                 colnames(private$time_series$channel_inflow$saturated) <-
                 private$model$channel$id
@@ -838,8 +854,8 @@ dynatop <- R6Class(
                             ts$step,
                             ts$n_sub_step,
                             as.double(tol),
-                            as.integer(max_it)
-                            )
+                            as.integer(max_it),
+                            as.double(ftol))
         },
         ## #############################
         init_ch = function(){
@@ -847,7 +863,7 @@ dynatop <- R6Class(
             channel <- private$model$channel
             gauge <- private$model$gauge
             point_inflow <- private$model$point_inflow
-            
+
             ## get the channels upstream of each id
             chn_con <- lapply(channel$id,
                               function(x){
@@ -859,8 +875,8 @@ dynatop <- R6Class(
                               }
                               )
             names(chn_con) <- paste(channel$id)
-            
-            
+
+
             ## compute the time to travel down each reach
             reach_time <- setNames( channel[,"length"] / channel[,"v_ch"], #private$model$param[channel$v_ch],
                                    channel$id )
@@ -868,7 +884,7 @@ dynatop <- R6Class(
             ## storage for output
             linear_time <- setNames(rep(list(NULL),length(gauge$name)),
                                     gauge$name)
-            
+
             ## Loop gauges
             for(gnm in 1:length(gauge$name)){
                 ## initialise diffuse input matrix
@@ -897,7 +913,7 @@ dynatop <- R6Class(
 
                 linear_time[[gnm]] <- list(diffuse=df,point=pnt)
             }
-                        
+
             private$summary$channel$linear_time <- linear_time
         },
         sim_ch = function(){
@@ -905,7 +921,7 @@ dynatop <- R6Class(
             out <- matrix(NA,length(private$time_series$index),
                           length(private$summary$channel$linear_time))
             colnames(out) <- names(private$summary$channel$linear_time)
-            
+
 
             ## ## function to make polynonial representing time delay histogram
             ## ## this works for instananeous flows
@@ -948,7 +964,7 @@ dynatop <- R6Class(
                 rL <- floor((tau0+tauL)/Dt)
                 irL <- rL+1 ## index in vector since R starts at 1 not zero
                 b <- rep(0,irL+1)
-                
+
                 if(rL>r0){
                     b[ir0:(irL-1)] <- Dt # inital values valid unless over written
                     b[ir0] <- ( ((r0+1)*Dt - tau0)^2 ) / (2*Dt)
@@ -963,13 +979,13 @@ dynatop <- R6Class(
                     b[ir0] <- (tauL/Dt)*( (r0+1)*Dt - tau0 - (tauL/2) )
                     b[ir0+1] <- (tauL/Dt)*(tau0 + (tauL/2) - r0*Dt )
                 }
-                
+
                 return(b/sum(b)) #this should really be b*v_ch/L
             }
-            
+
             ## Loop gauges
             for(gnm in names(private$summary$channel$linear_time)){
- 
+
                 ## initialise the point - set to 0
                 out[,gnm] <- 0
 
@@ -1014,5 +1030,5 @@ dynatop <- R6Class(
     )
     )
 
-    
-    
+
+

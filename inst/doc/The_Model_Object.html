@@ -14,19 +14,6 @@
 
 <title>The Model Object</title>
 
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
 <script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
 // v0.0.1
 // Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
@@ -52,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -481,14 +469,14 @@ vignettes for further details.</p>
 <span id="cb3-13"><a href="#cb3-13"></a><span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
 <span id="cb3-14"><a href="#cb3-14"></a><span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
 <span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a><span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a><span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06</span></span>
-<span id="cb3-19"><a href="#cb3-19"></a><span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06</span></span>
-<span id="cb3-20"><a href="#cb3-20"></a><span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a><span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06</span></span>
-<span id="cb3-22"><a href="#cb3-22"></a><span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06</span></span></code></pre></div>
-<p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. Not all the parameters are revelent for each option. See the Hillslope HRU vignette for details.</p>
+<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0 s_raf t_raf</span></span>
+<span id="cb3-17"><a href="#cb3-17"></a><span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-18"><a href="#cb3-18"></a><span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-19"><a href="#cb3-19"></a><span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-20"><a href="#cb3-20"></a><span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-21"><a href="#cb3-21"></a><span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-22"><a href="#cb3-22"></a><span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span></code></pre></div>
+<p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. Not all the parameters are relevant for each option. See the Hillslope HRU vignette for details.</p>
 <table>
 <caption><span id="tab:hillslope-table">Table 2: </span> Description of hillslope data frame columns</caption>
 <colgroup>
@@ -570,7 +558,7 @@ vignettes for further details.</p>
 <td>cls_*</td>
 <td>integer</td>
 <td>-</td>
-<td>Classification of HRU in each of the classes used in its definition. The extra part fo the name matches the class name given in dynatopGIS</td>
+<td>Classification of HRU in each of the classes used in its definition. The extra part of the name matches the class name given in dynatopGIS</td>
 </tr>
 <tr class="even">
 <td>opt</td>

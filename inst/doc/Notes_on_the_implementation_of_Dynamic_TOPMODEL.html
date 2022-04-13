@@ -14,19 +14,6 @@
 
 <title>Notes on the implementation of Dynamic TOPMODEL</title>
 
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
 <script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
 // v0.0.1
 // Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
@@ -52,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 
@@ -334,7 +322,7 @@ should be in <span class="math inline">\(m^3/s\)</span>. In the channel HRU solu
 <p>To aid the readability of the code the variables are labelled consistently
 with regards to the vignettes. For example:</p>
 <ul>
-<li>Single subscript: <span class="math inline">\(l_{sz}\)</span> becomes <code>l_sz</code>, <span class="math inline">\(s_{uz}\)</span> becomes <code>s_uz</code> etc</li>
+<li>Single subscript: <span class="math inline">\(l_{sz}\)</span> becomes <code>l_sz</code>, <span class="math inline">\(s_{uz}\)</span> becomes <code>s_uz</code> etc.</li>
 <li>Directional variables: <span class="math inline">\(q_{rz \rightarrow uz}\)</span> becomes <code>q_rz_uz</code>, etc.</li>
 <li>Greek letters are spelt: <span class="math inline">\(\lambda\)</span> becomes <code>lambda</code></li>
 </ul>

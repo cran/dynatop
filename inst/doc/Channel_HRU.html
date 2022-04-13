@@ -14,19 +14,6 @@
 
 <title>Channel HRU</title>
 
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
 <script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
 // v0.0.1
 // Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
@@ -52,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -360,7 +348,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL hillslope formulation. This
-returns the inflow to the channel reachs specified in the model.
+returns the inflow to the channel reaches specified in the model.
 This vignette documents the formulation and the numerical solution used to
 route these channel inflows, along with other diffuse and point inputs to the
 model.</p>
@@ -386,15 +374,15 @@ section of the hillslope HRU</caption>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Dischage from a reach at time <span class="math inline">\(t\)</span></td>
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span></td>
 <td align="center"><span class="math inline">\(q\left(t\right)\)</span></td>
-<td>Instananeous discharge</td>
+<td>Instantaneous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
-<td>Dischage from a reach at time <span class="math inline">\(t\)</span></td>
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span></td>
 <td align="center"><span class="math inline">\(g\left(t\right)\)</span></td>
-<td>Instananeous discharge</td>
+<td>Instantaneous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
@@ -412,7 +400,7 @@ section of the hillslope HRU</caption>
 <tr class="odd">
 <td>Velocity</td>
 <td align="center"><span class="math inline">\(v_{ch}\)</span></td>
-<td>Effective velocity of water convience within the Channel HRUnetwork</td>
+<td>Effective velocity of water conveyance within the Channel HRU network</td>
 <td align="center">m/s</td>
 </tr>
 </tbody>
@@ -458,7 +446,7 @@ p\left(t - \tau_{L}\right)
 <p>Since the action on the point inputs is purely advective the flow at a gauged
 location can be written as the summation of the diffuse and external point
 inflows to the Channel
-HRUs (reachs) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
+HRUs (reaches) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
 <span class="math inline">\(\tau_{0}^{\left[k\right]}\)</span> be the advective time delay between water leaving the reach and
 arriving at the gauge. This is readily computed from the channel HRU
 connectivity, reach lengths and velocities. The gauged flow can thus be
@@ -472,11 +460,11 @@ g\left(t\right) = \sum_{k}
 \]</span></p>
 <p>To solve for the gauge flow on a discrete time step <span class="math inline">\(\Delta t\)</span> suppose that
 <span class="math inline">\(t = i\Delta t\)</span> and that the flow index by the time subscript is valid over
-the preceeding time step; for example
+the preceding time step; for example
 <span class="math display">\[
 d\left(t\right) = d_{i\Delta t} \quad \left(i-1\right)\Delta t \leq t &lt;i\Delta t
 \]</span></p>
-<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaing mass
+<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaining mass
 conservation in the formulation, the gauged flows must be integrated over the
 time period. Consider one of the contributing
 HRUs, then (dropping the superscript <span class="math inline">\(k\)</span>) the contribution of the point inflow
@@ -507,7 +495,7 @@ d_{\left(i-1-r_{\tau}\right)\Delta t}
 \]</span>
 where <span class="math inline">\(r_\tau\)</span> is the largest integer for which
 <span class="math inline">\(r_{\tau}\Delta t \leq \tau\)</span>.
-Next consider the integral of the difuse inflows over <span class="math inline">\(\tau\)</span>; that is
+Next consider the integral of the diffuse inflows over <span class="math inline">\(\tau\)</span>; that is
 <span class="math display">\[
 \int\limits_{\tau_{0}}^{\tau_{0} +
   \tau_{L}}
@@ -688,10 +676,10 @@ d_{\left(i-r_{0}-1\right)\Delta t}
 <div id="examples" class="section level2">
 <h2>Examples</h2>
 <p>In this section some example histograms are generated based upon the length,
-velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU alond with the time step <span class="math inline">\(\Delta t\)</span>.</p>
+velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU along with the time step <span class="math inline">\(\Delta t\)</span>.</p>
 <div id="point-input" class="section level3">
 <h3>Point input</h3>
-<p>First a function for defining the histrogram for a point inflow can be coded
+<p>First a function for defining the histogram for a point inflow can be coded
 as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">## L is length of channel</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="co">## vch is channel velocity</span></span>
@@ -723,7 +711,7 @@ non-zero elements are the 4th and 5th, but with the 4th being larger then the 5t
 </div>
 <div id="diffuse-inflow" class="section level3">
 <h3>Diffuse inflow</h3>
-<p>The function for the difuse inflow is more complex since the special cases
+<p>The function for the diffuse inflow is more complex since the special cases
 have to be handled:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>fd &lt;-<span class="st"> </span><span class="cf">function</span>(L,vch,Dt,tau0){</span>
 <span id="cb5-2"><a href="#cb5-2"></a>  tauL &lt;-<span class="st"> </span>L<span class="op">/</span>vch</span>
@@ -751,7 +739,7 @@ have to be handled:</p>
 <span id="cb5-24"><a href="#cb5-24"></a>  <span class="kw">return</span>(b<span class="op">*</span>vch<span class="op">/</span>L)</span>
 <span id="cb5-25"><a href="#cb5-25"></a>}</span></code></pre></div>
 <p>In the first example there is no advective time delay and
-<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay historgram in which the
+<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay histogram in which the
 first two values equal 0.5. This is an example of the case <span class="math inline">\(r_{L}=r_{0}+1\)</span></p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>b &lt;-<span class="st"> </span><span class="kw">fd</span>(<span class="dt">L=</span><span class="dv">200</span>,<span class="dt">vch=</span><span class="dv">1</span>,<span class="dt">Dt=</span><span class="dv">200</span>,<span class="dt">tau0=</span><span class="dv">0</span>)</span>
 <span id="cb6-2"><a href="#cb6-2"></a><span class="kw">sum</span>(b)</span>
@@ -773,7 +761,7 @@ histogram. In this case <span class="math inline">\(r_{L}&gt;r_{0}+1\)</span>.</
 <span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; [1] 1</span></span>
 <span id="cb8-4"><a href="#cb8-4"></a><span class="kw">barplot</span>(b)</span></code></pre></div>
 <p><img src="data:image/png;base64,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M/hHPTk1a2hIUCsuwoxGY0BAgK3Rxx57LCQk5PYtqampfn5+7Z/j3YWHh48cOfKOjZmZmYcPH7bDrgcNGnTHxtzc3JMnT0rvOjo62mQy3b7FYDD4+/vb4blDdvg7bT2DracIAmg/pY5gLPaF3igSGIt9oU8qnCI2nVidNDhjvyU5fWJSC4t9C7dfS2SxL5yTAoFZD8+JiPs0rYXFvpqmadrVAzNj47cnHyhhsS+cjwJHBRb7Qr8UCIzFvtAvBW5ysNgX+qXANZimac0XipbPmJa7/h+1LS32nflWztMR/gaHzQ64b2oEdktzPYt9oTMqBQbojgI3OQD9IjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCDoPzg5hv/fpMfaAAAAAElFTkSuQmCC" /><!-- --></p>
-<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is posisitve; being either a
+<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is positive; being either a
 direct multiple of the time step</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>b &lt;-<span class="st"> </span><span class="kw">fd</span>(<span class="dt">L=</span><span class="dv">600</span>,<span class="dt">vch=</span><span class="dv">1</span>,<span class="dt">Dt=</span><span class="dv">200</span>,<span class="dt">tau0=</span><span class="dv">800</span>)</span>
 <span id="cb9-2"><a href="#cb9-2"></a><span class="kw">sum</span>(b)</span>
