@@ -12,7 +12,7 @@
 
 
 
-<title>The Hillslope HRU</title>
+<title>The HRU</title>
 
 
 <style type="text/css">
@@ -222,7 +222,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">The Hillslope HRU</h1>
+<h1 class="title toc-ignore">The HRU</h1>
 
 
 <div id="TOC">
@@ -236,15 +236,26 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li><a href="#unsaturated-zone" id="toc-unsaturated-zone">Unsaturated Zone</a></li>
 <li><a href="#saturated-zone" id="toc-saturated-zone">Saturated Zone</a></li>
 </ul></li>
-<li><a href="#approximating-equations" id="toc-approximating-equations">Approximating Equations</a>
+<li><a href="#numerical-solution" id="toc-numerical-solution">Numerical Solution</a>
 <ul>
-<li><a href="#surface-excess" id="toc-surface-excess">Surface excess</a></li>
+<li><a href="#downward-pass" id="toc-downward-pass">Downward Pass</a></li>
 <li><a href="#root-zone-1" id="toc-root-zone-1">Root Zone</a></li>
 <li><a href="#unsaturated-zone-1" id="toc-unsaturated-zone-1">Unsaturated Zone</a></li>
 <li><a href="#saturated-zone-1" id="toc-saturated-zone-1">Saturated Zone</a></li>
 </ul></li>
 <li><a href="#numerical-algorithm" id="toc-numerical-algorithm">Numerical Algorithm</a></li>
 <li><a href="#transmissivity-profiles" id="toc-transmissivity-profiles">Transmissivity Profiles</a></li>
+<li><a href="#test-appendix-vpmc-v2" id="toc-test-appendix-vpmc-v2">test appendix VPMC v2</a>
+<ul>
+<li><a href="#flux-limiters-for-tvd" id="toc-flux-limiters-for-tvd">Flux limiters for TVD</a></li>
+</ul></li>
+<li><a href="#appendix-a---variable-parameter-muskingham-solution" id="toc-appendix-a---variable-parameter-muskingham-solution">Appendix A - Variable Parameter Muskingham solution</a>
+<ul>
+<li><a href="#approximating-tank-models" id="toc-approximating-tank-models">Approximating Tank Models</a></li>
+<li><a href="#approximating-diffusion-wave-routing" id="toc-approximating-diffusion-wave-routing">Approximating Diffusion Wave Routing</a></li>
+<li><a href="#numerical-solution-1" id="toc-numerical-solution-1">Numerical Solution</a></li>
+<li><a href="#solution-for-saturated-zone" id="toc-solution-for-saturated-zone">Solution for saturated zone</a></li>
+</ul></li>
 <li><a href="#appendix-a---monotonicity-of-fleftzright" id="toc-appendix-a---monotonicity-of-fleftzright">Appendix A - Monotonicity of <span class="math inline">\(f\left(z\right)\)</span></a></li>
 <li><a href="#appendix-b---comparison-to-the-infinitesimal-slab-derivation" id="toc-appendix-b---comparison-to-the-infinitesimal-slab-derivation">Appendix B - Comparison to the Infinitesimal slab derivation</a>
 <ul>
@@ -264,10 +275,10 @@ be broken up into hydrologically similar regions, or Hydrological Response
 Units (HRUs), where all the area within a HRU behaves in a hydrologically
 similar fashion. Further discussion and the connection of HRUs is outlined <a href="Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">elsewhere</a>.</p>
 <p>This document outlines the conceptual structure and computational
-implementation of the hillslope HRU. The hillslope HRU is a representation of
-an area of hill slope with, for example, similar topographic, soil and upslope area
+implementation of the HRU. The HRU is a representation of
+an area of teh catchment with, for example, similar topographic, soil and upslope area
 characteristics.</p>
-<p>The hillslope HRU is considered to be a area of hill slope with outflow
+<p>The HRU is considered to be a area of catchment with outflow
 occurring across a specified width of it boundary.
 It is formed of four zones representing the surface water, which
 passes water between HRUs and drains to the root zone. The root zone characterises
@@ -281,12 +292,11 @@ approximation. The zones and variables used below are shown in the schematic dia
 Figure 1: Schematic of the Hill slope HRU
 </p>
 </div>
-<p>In the following section the governing equations of the hillslope HRU are
+<p>In the following section the governing equations of the HRU are
 given in a finite volume form. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
-schemes. These are valid for a wide range of transmissivity profiles,
-including those present in the code and presented in the third sections of the
-vignette.</p>
+schemes. These are valid for the wide range of surface zone and saturated zone
+transmissivity profiles presented in the vignette.</p>
 <p>Two appendices provide supporting information justifying the numerical schemes
 and an alternative derivation of the governing equations based on the
 infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.</p>
@@ -301,24 +311,21 @@ infinitesimal slab across the hillslope HRU.</p>
 uniform along the hillslope.</p></li>
 <li><p>Precipitation and Potential Evapotranspiration occur at spatially uniform
 rates.</p></li>
-<li><p>All fluxes <span class="math inline">\(r_{\star \rightarrow \star}\)</span> are considered to be positive when
+<li><p>All vertical fluxes <span class="math inline">\(r_{\star \rightarrow \star}\)</span> are considered to
+spatially uniform and to be positive when
 travelling in the direction of the arrow, but can, in some cases be negative.</p></li>
-<li><p>All fluxes <span class="math inline">\(l_{\star}\)</span> and <span class="math inline">\(q_{\star}\)</span> are considered to be positive flows travelling downslope.</p></li>
+<li><p>All lateral fluxes <span class="math inline">\(q_{\star}\)</span> and <span class="math inline">\(q_{\star}\)</span> are considered to be positive flows travelling downslope.</p></li>
 <li><p>The superscripts <span class="math inline">\(^+\)</span> and <span class="math inline">\(^-\)</span> are used to denote variables for the outflow
 and inflow to the hillslope.</p></li>
 <li><p><span class="math inline">\(\left.y\right\rvert_t\)</span> indicates the value of the
 variable <span class="math inline">\(y\)</span> at time <span class="math inline">\(t\)</span></p></li>
-<li><p>Spatial averages are denoted with a <span class="math inline">\(\bar{}\)</span> so for example integrating
+<li><p>In the derivation storage values at a given cross section of the HRU are
+expressed as a depth and denoted with a <span class="math inline">\(\bar{}\)</span>. So integrating
 over the length of the hillslope we find</p></li>
 </ul>
 <p><span class="math display">\[\begin{equation}
-\int w y dx = A\bar{y}
+\int w \bar{y} dx = y
 \end{equation}\]</span></p>
-<ul>
-<li>Average values over a time step are denoted with a <span class="math inline">\(\hat{}\)</span>. If the
-temporal average is of a spatial average the <span class="math inline">\(\bar{}\)</span> is dropped. For
-example the temporal average of the spatial average <span class="math inline">\(\bar{y}\)</span> over a time step is <span class="math inline">\(\hat{y}\)</span>.</li>
-</ul>
 <table>
 <caption><span id="tab:hs-x-notation">Table 1: </span> Outline of notation for describing a cross
 section of the hillslope HRU</caption>
@@ -340,59 +347,47 @@ section of the hillslope HRU</caption>
 <tr class="odd">
 <td>Storage</td>
 <td><span class="math inline">\(s_{sf}\)</span></td>
-<td>Surface excess storage per unit width</td>
-<td>m</td>
+<td>Surface excess storage</td>
+<td>m<span class="math inline">\(^3\)</span></td>
 </tr>
 <tr class="even">
 <td></td>
 <td><span class="math inline">\(s_{rz}\)</span></td>
-<td>Root zone storage per unit width</td>
-<td>m</td>
+<td>Root zone storage</td>
+<td>m<span class="math inline">\(^3\)</span></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td><span class="math inline">\(s_{uz}\)</span></td>
-<td>Unsaturated zone storage per unit width</td>
-<td>m</td>
+<td>Unsaturated zone storage</td>
+<td>m<span class="math inline">\(^3\)</span></td>
 </tr>
 <tr class="even">
 <td></td>
 <td><span class="math inline">\(s_{sz}\)</span></td>
-<td>Saturated zone storage deficit per unit width</td>
-<td>m</td>
+<td>Saturated zone storage deficit</td>
+<td>m<span class="math inline">\(^3\)</span></td>
 </tr>
 <tr class="odd">
 <td>Vertical fluxes</td>
 <td><span class="math inline">\(r_{sf \rightarrow rz}\)</span></td>
-<td>Flow from the surface excess store to the root zone per unit width</td>
-<td>m/s</td>
+<td>Flow from the surface excess store to the root zone</td>
+<td>m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
 <td></td>
 <td><span class="math inline">\(r_{rz \rightarrow uz}\)</span></td>
-<td>Flow from the root zone to the unsaturated zone per unit width</td>
-<td>m/s</td>
+<td>Flow from the root zone to the unsaturated zone</td>
+<td>m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
 <td></td>
 <td><span class="math inline">\(r_{uz \rightarrow sz}\)</span></td>
-<td>Flow from unsaturated to saturated zone per unit width</td>
-<td>m/s</td>
+<td>Flow from unsaturated to saturated zone</td>
+<td>m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
 <td>Lateral fluxes</td>
-<td><span class="math inline">\(l_{sf}\)</span></td>
-<td>Lateral flow in the surface zone per unit outflow width</td>
-<td>m<span class="math inline">\(^2\)</span>/s</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td><span class="math inline">\(l_{sz}\)</span></td>
-<td>Lateral flow in the saturated zone per unit outflow width</td>
-<td>m<span class="math inline">\(^2\)</span>/s</td>
-</tr>
-<tr class="even">
-<td></td>
 <td><span class="math inline">\(q_{sf}\)</span></td>
 <td>Lateral flow in the hillslope surface zone</td>
 <td>m<span class="math inline">\(^3\)</span>/s</td>
@@ -407,19 +402,19 @@ section of the hillslope HRU</caption>
 <td>Vertical fluxes to the HRU</td>
 <td><span class="math inline">\(p\)</span></td>
 <td>Precipitation rate</td>
-<td>m/s</td>
+<td>m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
 <td></td>
 <td><span class="math inline">\(e_p\)</span></td>
 <td>Potential Evapotranspiration rate</td>
-<td>m/s</td>
+<td>m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
 <td>Other HRU properties</td>
 <td><span class="math inline">\(A\)</span></td>
 <td>Plan area</td>
-<td>m<span class="math inline">\(^3\)</span></td>
+<td>m<span class="math inline">\(^2\)</span></td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -430,46 +425,28 @@ section of the hillslope HRU</caption>
 <tr class="even">
 <td></td>
 <td><span class="math inline">\(\Delta x\)</span></td>
-<td>Effective length of the hillslope HRU (Area divided by outflow width)</td>
+<td>Effective length of the hillslope HRU (x = A/w$)</td>
 <td>m</td>
 </tr>
 <tr class="odd">
 <td></td>
-<td><span class="math inline">\(k_{sf}\)</span></td>
-<td>Maximum flow rate from surface excess to root zone per unit width</td>
-<td>m/s</td>
+<td><span class="math inline">\(\Theta_{sf}\)</span></td>
+<td>Further properties and parameters for the solution of the surface zone</td>
+<td>:-:</td>
 </tr>
 <tr class="even">
 <td></td>
-<td><span class="math inline">\(c_{sf}\)</span></td>
-<td>Surface excess storage celerity</td>
-<td>m/s</td>
+<td><span class="math inline">\(\Theta_{rz}\)</span></td>
+<td>Further properties and parameters for the solution of the root zone</td>
+<td>:-:</td>
 </tr>
 <tr class="odd">
 <td></td>
-<td><span class="math inline">\(s_{raf}\)</span></td>
-<td>Surface runoff attenuation feature storage</td>
-<td>m</td>
+<td><span class="math inline">\(\Theta_{uz}\)</span></td>
+<td>Further properties and parameters for the solution of the saturated zone</td>
+<td>:-:</td>
 </tr>
 <tr class="even">
-<td></td>
-<td><span class="math inline">\(t_{raf}\)</span></td>
-<td>Surface runoff attenuation feature time constant</td>
-<td>s</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td><span class="math inline">\(s_{rzmax}\)</span></td>
-<td>Maximum root zone storage depth</td>
-<td>m</td>
-</tr>
-<tr class="even">
-<td></td>
-<td><span class="math inline">\(T_d\)</span></td>
-<td>Unsaturated zone time constant per m of saturated storage deficit.</td>
-<td>s/m</td>
-</tr>
-<tr class="odd">
 <td></td>
 <td><span class="math inline">\(\Theta_{sz}\)</span></td>
 <td>Further properties and parameters for the solution of the saturated zone</td>
@@ -484,155 +461,251 @@ section of the hillslope HRU</caption>
 is derived.</p>
 <div id="surface-zone" class="section level2">
 <h2>Surface zone</h2>
-<p>The storage in the surface zone satisfies <span class="math inline">\(s_{sf} \geq 0\)</span>.
-Surface storage is increased by lateral downslope flow from upslope HRUs.
-Water flows to the root zone at a constant rate <span class="math inline">\(k_{sf}\)</span>, unless limited by
+<p>The storage in the surface zone satisfies the mass balance equation</p>
+<p><span class="math display">\[
+\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf}
+\]</span></p>
+<p>where surface storage is increased by lateral downslope flow from upslope HRUs.
+Water flows to the root zone at a constant rate <span class="math inline">\(r_{sf \rightarrow rz}\)</span>, unless limited by
 the available storage at the surface or the ability of the root zone to
 receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).</p>
 <p>In cases where lateral flows in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
-<p>The governing ODE for a cross section of the hillslope can be written as
-<span class="math display">\[\begin{equation}
-\frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - w r_{sf \rightarrow rz}
-\end{equation}\]</span>
-where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p>
-<p>Integration over the hillslope length and substituting in the spatial averages gives
-<span class="math display">\[\begin{equation}
-A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
-\end{equation}\]</span></p>
-<p>The outflow comes from two sources; the runoff-attenuation feature
-(RAF) and surface flow; giving</p>
-<p><span class="math display">\[
-q_{sf}^{+} = w^{+}l_{sf}^{+} + \frac{A}{t_{raf}}\min\left(s_{raf},\bar{s}_{sf}\right)
+<p>To determine the outflow <span class="math inline">\(q^{+}_{sf}\)</span> a second relationship between
+<span class="math inline">\(q^{-}_{sf}\)</span>, <span class="math inline">\(s_{sf}\)</span> and <span class="math inline">\(q^{+}_{sf}\)</span> is required. This is developed using a
+Muskingham type approximation to the volume. Suppose the cross-sectional area
+<span class="math inline">\(a\)</span> and flow <span class="math inline">\(q\)</span> are related by a one-to-one invetable function <span class="math inline">\(f\)</span> such that
+<span class="math inline">\(q = f\left(a, \Theta_{sf}\right)\)</span>. Using this the storage can be approximated by
+<span class="math display">\[
+s_{sf} = \Delta x \left( \eta_{sf} a^{-}_{sf} +
+\left(1-\eta_{sf}\right) a^{+}_{sf} \right)
 \]</span></p>
-<p>Since <span class="math inline">\(\Delta x = A/w^{+}\)</span> and <span class="math inline">\(l_{sf}^{-} = q_{sf}^{-}/w^{+}\)</span> re arranging gives
-<span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
-l_{sf}^{+}\right) - \frac{1}{t_{raf}}
-\min\left(s_{raf},\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
-\end{equation}\]</span></p>
-<p>This equation represents the evolution in time of <span class="math inline">\(\bar{s}_{sf}\)</span> expressed in
-terms of the unit width fluxes, the runoff attenuation feature outflow and an effective length <span class="math inline">\(A/w^+\)</span></p>
-<p>To complete the formulation assume that
-<span class="math inline">\(l_{sf}^{+} = c_{sf}\max\left(0,\bar{s}_{sf} - s_{raf}\right)\)</span>.
-which gives
-<span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
-c_{sf}\max\left(0,\bar{s}_{sf}-s_{raf}\right)\right)
-- \frac{1}{t_{raf}} \min\left(s_{raf},\bar{s}_{sf}\right)
-- \bar{r}_{sf \rightarrow rz}
-\end{equation}\]</span></p>
+<p>We consider only that case where <span class="math inline">\(f\)</span> is defined such that <span class="math inline">\(f\left(0\right) = 0\)</span>
+and <span class="math inline">\(\frac{dq}{da} &gt;0\)</span>; that is positive celerity. The role of <span class="math inline">\(\eta_{sf}\)</span> in considered futher in
+Appendix A which is summarised in Table <a href="#tab:hs-sf-type">2</a>.and the numerical solution.</p>
+<table>
+<caption><span id="tab:hs-sf-type">Table 2: </span> Outline formualtions between cross sectional area
+and flow for the surface zone</caption>
+<colgroup>
+<col width="8%" />
+<col width="58%" />
+<col width="22%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Parameters</th>
+<th>Equations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>linTank</td>
+<td>Linear Tank with stepped state dependent time constant</td>
+<td><span class="math inline">\(v_sf, k_sf\)</span> (m/s, m/s)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>linTank</td>
+<td>Linear Tank with continuous state dependent time constant</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>kinConst</td>
+<td>Kinematic routing with constant celerity</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>kinShlw</td>
+<td>Kinematic routing with shallow depth approx for wetted perimeter</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>DifConst</td>
+<td>Diffuse routing with constant celerity and diffusivity</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="root-zone" class="section level2">
 <h2>Root zone</h2>
 <p>The root zone gains water from precipitation and the surface zone. It loses water through
-evaporation and to the unsaturated zone. Since
-all the vertical fluxes are spatially uniform the evolution can be evaluated
-in terms of the spatial averages. The root zone storage satisfies</p>
-<p><span class="math display">\[\begin{equation} 0 \leq \bar{s}_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
+evaporation and to the unsaturated zone. All vertical fluzes are
+considered to be spatially uniform. The root zone storage satisfies</p>
+<p><span class="math display">\[\begin{equation} 0 \leq s_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
 <p>with the governing ODE
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} \bar{s}_{rz} +
-\bar{r}_{sf\rightarrow rz} - \bar{r}_{rz \rightarrow uz}
+\frac{ds_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} s_{rz} +
+r_{sf\rightarrow rz} - r_{rz \rightarrow uz}
 \end{equation}\]</span></p>
 <p>Fluxes from the surface and to the unsaturated zone are
 controlled by the level of root zone storage along with the state of the unsaturated
 and saturated zones.</p>
-<p>For <span class="math inline">\(\bar{s}_{rz} \leq s_{rzmax}\)</span> then <span class="math inline">\(\bar{r}_{rz \rightarrow uz} \leq 0\)</span>. Negative
-values of <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> may occur only when water is returned from the
+<p>For <span class="math inline">\(s_{rz} \leq s_{rzmax}\)</span> then <span class="math inline">\(r_{rz \rightarrow uz} \leq 0\)</span>. Negative
+values of <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may occur only when water is returned from the
 unsaturated zone due to saturation caused by lateral inflow to the saturated zone.</p>
-<p>When <span class="math inline">\(\bar{s}_{rz} = s_{rzmax}\)</span> then
+<p>When <span class="math inline">\(s_{rz} = s_{rzmax}\)</span> then
 <span class="math display">\[\begin{equation}
-p - e_p + \bar{r}_{sf\rightarrow rz} - \bar{r}_{rz \rightarrow uz} \leq 0
+p - e_p + r_{sf\rightarrow rz} - r_{rz \rightarrow uz} \leq 0
 \end{equation}\]</span>
-In this case <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> may be positive if
+In this case <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may be positive if
 <span class="math display">\[\begin{equation}
-p - e_p + \bar{r}_{sf\rightarrow rz} &gt; 0
+p - e_p + r_{sf\rightarrow rz} &gt; 0
 \end{equation}\]</span>
-so long as the unsaturated zone can receive the water. If <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
-receive water, then <span class="math inline">\(\bar{r}_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
+so long as the unsaturated zone can receive the water. If <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
+receive water, then <span class="math inline">\(r_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
 negative) to ensure the equality is met.</p>
 </div>
 <div id="unsaturated-zone" class="section level2">
 <h2>Unsaturated Zone</h2>
 <p>The unsaturated zone acts as a non-linear tank subject to the constraint
-<span class="math display">\[\begin{equation} 0 \leq \bar{s}_{uz} \leq \bar{s}_{sz} \end{equation}\]</span></p>
+<span class="math display">\[\begin{equation} 0 \leq s_{uz} \leq s_{sz} \end{equation}\]</span></p>
 <p>The governing ODE is written as
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{uz}}{dt} = \bar{r}_{rz \rightarrow uz} - \bar{r}_{uz \rightarrow sz}
+\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - r_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <p>If water is able to pass freely to the saturated zone, then it flows at the rate
-<span class="math inline">\(\frac{\bar{s}_{uz}}{T_d \bar{s}_{sz}}\)</span>. If <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}=0\)</span> this is interpreted to mean
+<span class="math inline">\(\frac{A s_{uz}}{T_d s_{sz}}\)</span>.
+<em>TODO: not sure if needed</em> If <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}=0\)</span> this is interpreted to mean
 that the flow rate is <span class="math inline">\(\frac{1}{T_d}\)</span>.
-In this situation where <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}\)</span> the subsurface below
+In this situation where <span class="math inline">\(s_{sz}=s_{uz}\)</span> the subsurface below
 the root zone can be considered saturated, as in there is no further available
 storage for water, but separated into parts: an upper part with vertical
 flow and a lower part with lateral flux.</p>
-<p>It is possible that <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span> is
+<p>It is possible that <span class="math inline">\(r_{uz \rightarrow sz}\)</span> is
 constrained by the ability of the saturated zone to receive water. If
-this is the case <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span> occurs at the maximum
-possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is limited to ensure that
-<span class="math inline">\(\bar{s}_{uz} \leq \bar{s}_{sz}\)</span>.</p>
+this is the case <span class="math inline">\(r_{uz \rightarrow sz}\)</span> occurs at the maximum
+possible rate and <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is limited to ensure that
+<span class="math inline">\(s_{uz} \leq s_{sz}\)</span>.</p>
 </div>
 <div id="saturated-zone" class="section level2">
 <h2>Saturated Zone</h2>
 <p>For a HRU the alteration of the storage in the saturated zone is
-given by the kinematic equation
+given by the kinematic equation implimented through the muskingham
+approximation (see Appendix A). This gives similar equations to the Surface
+zone, but considered in terms of storage deficits; that is</p>
+<p><span class="math display">\[
+\frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+s_{sz} = \frac{\Delta x}{2} \left( a^{-}_{sz} + a^{+}_{sz} \right)
+\]</span></p>
+<p>The Kinematic approximation then requires a relationship between <span class="math inline">\(q_{sz}\)</span> and
+the cross sectionsal flow area, given in terms of the cross sectional storage
+defict <span class="math inline">\(a_{sz}\)</span>. This relationship is the transmissivity
+profile which defines a relationship through a one-to-one, continuously differentiable function
+<span class="math inline">\(g: \left[0,D\right] \rightarrow \mathcal{R}^{+}\)</span> which returns the lateral flow on
+a unit width such that <span class="math inline">\(q_{sz} = w g\left(a_{sz}/w,\Theta_{sz}\right)  \geq 0\)</span>. The function <span class="math inline">\(g\)</span> is considered to satisify
 <span class="math display">\[\begin{equation}
-\frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + w r_{uz \rightarrow sz}
-\end{equation}\]</span></p>
-<p>Integration over the length of the hillslope and substitution of the
-spatial averaged values gives
-<span class="math display">\[\begin{equation}
--A\frac{d\bar{s}_{sz}}{dt} = q_{sz}^{-} - q_{sz}^{+}  + A\bar{r}_{uz \rightarrow sz}
-\end{equation}\]</span></p>
-<p>Rearranging this gives
-<span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
-\end{equation}\]</span></p>
-<p>The Kinematic approximation then depends upon the specification of a relationship
-between <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(l_{sz}^{+}\)</span>. This usually termed the transmissivity
-profile however the use of the average, rather than cross sectional saturated
-storage deficit means this term is used only loosely. More generally the
-relationship is taken
-to be a one-to-one, continuously differentiable function
-<span class="math inline">\(g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}\)</span> which returns the lateral flow on
-a unit width such that <span class="math inline">\(l_{sz}^{+} = g\left(\bar{s}_{sz},\Theta_{sz}\right)  \geq 0\)</span> which satisfies
-<span class="math display">\[\begin{equation}
--\frac{dl_{sz}^{+}}{d\bar{s}_{sz}} = -\frac{d}{d\bar{s}_{sz}}g\left(\bar{s}_{sz},\Theta_{sz}\right) \geq 0
+-\frac{dq_{sz}}{da_{sz}} = -w\frac{d}{da_{sz}}g\left(a_{sz}/w,\Theta_{sz}\right) \geq 0
 \end{equation}\]</span>
 and
 <span class="math display">\[\begin{equation}
-g\left(\bar{s}_{sz},\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
-\bar{s}_{sz}\rightarrow \infty
+g\left(a_{sz}/w,\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
+a_{sz}\rightarrow \infty
 \end{equation}\]</span>
 The first condition ensures a non negative celerity (wave speed) which is in
-keeping with the conceptualisation of the model. The first condition also implies
-that <span class="math inline">\(l_{sz}^{+}\)</span> decreases with increasing <span class="math inline">\(\bar{s}_{sz}\)</span>. This combined with
+keeping with the conceptualisation of the model. This combined with
 the second condition ensures that the model represents a state where no
 lateral inflow is generated.</p>
-<p>Using the relationship between <span class="math inline">\(l_{sz}^{+}\)</span> and <span class="math inline">\(\bar{s}_{sz}\)</span> gives
-<span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(g\left(\bar{s}_{sz},\Theta_{sz}\right) - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
-\end{equation}\]</span></p>
 </div>
 </div>
-<div id="approximating-equations" class="section level1">
-<h1>Approximating Equations</h1>
+<div id="numerical-solution" class="section level1">
+<h1>Numerical Solution</h1>
 <p>No analytical solution yet exists for simultaneous integration of the system of
 ODEs outlined above. In the following an implicit scheme, where fluxes
 between stores are considered constant over the time step and gradients are
 evaluated at the final state, is presented.</p>
 <p>The basis of the solution is that a gravity driven system will maximise
-the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>.</p>
-<p>Recalling that the temporal and spatial average vertical fluxes are denoted with
-a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in the following sections using the unknown vertical fluxes
-<span class="math inline">\(\hat{r}_{\star \rightarrow \star}\)</span> which are then determined by maximising the
-downward flux.</p>
-<div id="surface-excess" class="section level2">
-<h2>Surface excess</h2>
-<p>The implicit scheme gives</p>
+the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>. Hence on
+the first downward pass through the stores teh maximum rates of the vertical
+fluxes $_{* } is determined. This then moderated in the
+solution of the saturated zone, before the upward pass gives the final states.</p>
+<div id="downward-pass" class="section level2">
+<h2>Downward Pass</h2>
+<div id="surface-excess" class="section level3">
+<h3>Surface excess</h3>
+<p><strong>SEARCH WITH <span class="math inline">\(a^{+}\)</span> </strong></p>
+<p>Consider first the case with:</p>
+<ul>
+<li>a known constant value of <span class="math inline">\(\eta\)</span></li>
+<li>a known positive inflow <span class="math inline">\(q\left(a^{-}_{t+\Delta t}\right)\)</span> giving a value of
+<span class="math inline">\(a^{-}_{t+\Delta t}\)</span></li>
+<li>a known function <span class="math inline">\(q\)</span> such that <span class="math inline">\(\frac{dq\left(a\right)}{da}\geq 0\)</span> and
+<span class="math inline">\(q\left(0\right)=0\)</span></li>
+</ul>
+<p>An implicit
+solution gives the joint equations
+<span class="math display">\[
+s_{t+\Delta t} = \Delta x \left(\eta a^{-}_{t+\Delta t} + \left(1-\eta\right)
+a^{+}_{t+\Delta t} \right)
+\]</span>
+and
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(a^{+}_{t+\Delta t}\right) \right)
+\]</span></p>
+<p>The unknown outflow crossection satisfies <span class="math inline">\(a^{+}_{t+\Delta t} \geq 0\)</span>. The first
+expression for <span class="math inline">\(s_{t+\Delta t}\)</span> is strictly increasing with respect to
+<span class="math inline">\(a^{+}_{t+\Delta t}\)</span> while the second is decreasing, hence there is a unique
+solution for <span class="math inline">\(a^{+}_{t+\Delta t}\)</span> so long as
+<span class="math display">\[
+\Delta x \eta a^{-}_{t+\Delta t} \leq s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]</span>
+Failure of this condition represents a breakdown of the trapeziod
+approximation. This is handled by taking <span class="math inline">\(q\left(a^{+}_{t+\Delta t}\right)=0\)</span>
+and
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]</span>
+From this we see that
+<span class="math display">\[
+-r \leq \frac{1}{\Delta t} s_{t} + q\left(a^{-}_{t+Δt}\right) - \frac{\Delta
+x}{\Delta t} \eta a^{-}_{t+\Delta t}
+\]</span></p>
+<p>A more general numeric scheme is the following
+process</p>
+<ul>
+<li>select trial <span class="math inline">\(\hat{s}\)</span></li>
+<li>compute <span class="math inline">\(\hat{a} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{s} - \Delta x \eta a^{-}_{t+\Delta t}\right)\right)\)</span></li>
+<li>evaluate <span class="math inline">\(e = \hat{s} - s_{t} - \Delta t \left(q\left(a^{-}_{t+\Delta t}\right) + r_{t+\Delta t} - q\left(\hat{a}\right)\right)\)</span></li>
+</ul>
+<p>then search to find <span class="math inline">\(e=0\)</span></p>
+<p>Note that <span class="math inline">\(\frac{de}{d\hat{s}} = 1 + \frac{dq}{da}\frac{da}{d\hat{s}} &gt; 0\)</span> and
+<span class="math inline">\(\hat{s}=0\)</span> implies <span class="math inline">\(\hat{a} = 0\)</span> hence <span class="math inline">\(e \leq 0\)</span> so there is a single
+solution.</p>
+<p>Building on the generic solution in Appendix A the implicit scheme gives</p>
+<p><span class="math display">\[
+\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} =
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t }
+\left. s_{sf} \right.\rvert_{t} +
+\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t }
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t} -
+\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t }
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t}
+\]</span></p>
+<p>The maximum downward flux is that which minimises <span class="math inline">\(\left. s_sf \right.\rvert_{t + \Delta t}\)</span>. Since for any positive lateral inflow there
+must be surface storage the maximum downward flux is that which sets
+<span class="math inline">\(\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 0\)</span>.</p>
+<p>This provides the condition
+<span class="math display">\[
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t} \leq
+\frac{ 1 }{ \Delta t }
+\left. s_{sf} \right.\rvert_{t} +
+\frac{ \Delta t - \kappa\eta}{ \Delta t }
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t}
+\]</span></p>
 <p><span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 =
@@ -701,6 +774,7 @@ t}{\Delta x} \hat{l}_{sf}^{-}
 \hat{q}_{sf}^{+} = w^{+}c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 \end{equation}\]</span></p>
 </div>
+</div>
 <div id="root-zone-1" class="section level2">
 <h2>Root Zone</h2>
 <p>The implicit formulation for the root zone gives
@@ -746,6 +820,27 @@ T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t}
 </div>
 <div id="saturated-zone-1" class="section level2">
 <h2>Saturated Zone</h2>
+<p>Building on the generic solution in Appendix A the implicit scheme gives</p>
+<p><span class="math display">\[
+\left.q^{+}_{sz}\right.\rvert_{t + \Delta t} =
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t }
+\left( D - \left. s_{sz} \right.\rvert_{t} \right) +
+\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t }
+\left. q^{-}_{sz} \right.\rvert_{t + \Delta t} +
+\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t }
+\left. r_{uz \rightarrow sz} \right.\rvert_{t + \Delta t}
+\]</span></p>
+<p>The maximum downward flux is that which minimises <span class="math inline">\(\left. s_sf \right.\rvert_{t + \Delta t}\)</span>. Since for any positive lateral inflow there
+must be surface storage the maximum downward flux is that which sets
+<span class="math inline">\(\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 0\)</span>.</p>
+<p>This provides the condition
+<span class="math display">\[
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t} \leq
+\frac{ 1 }{ \Delta t }
+\left. s_{sf} \right.\rvert_{t} +
+\frac{ \Delta t - \kappa\eta}{ \Delta t }
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t}
+\]</span></p>
 <p>Initial evaluation and substitution of the flux from the unsaturated zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
@@ -968,12 +1063,12 @@ fluxes.</li>
 <h1>Transmissivity Profiles</h1>
 <p>The solution and numerical scheme have been presented with a general
 transmissivity function <span class="math inline">\(g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span>. Table
-<a href="#tab:hs-transmissivity">2</a> present the transmissivity profiles present as options within the <code>dynatop</code>
+<a href="#tab:hs-transmissivity">3</a> present the transmissivity profiles present as options within the <code>dynatop</code>
 package, the corresponding value to use for the <code>transmissivity_profile</code> value
 in the model options vector and the additional parameters or properties
-required. The additional parameter and properties are defined in Table <a href="#tab:hs-transmissivity-param">3</a>.</p>
+required. The additional parameter and properties are defined in Table <a href="#tab:hs-transmissivity-param">4</a>.</p>
 <table style="width:100%;">
-<caption><span id="tab:hs-transmissivity">Table 2: </span> Transmissivity profiles available with the
+<caption><span id="tab:hs-transmissivity">Table 3: </span> Transmissivity profiles available with the
 <code>dynatop</code> package.</caption>
 <colgroup>
 <col width="16%" />
@@ -1029,7 +1124,7 @@ required. The additional parameter and properties are defined in Table <a href="
 </tbody>
 </table>
 <table>
-<caption><span id="tab:hs-transmissivity-param">Table 3: </span> Additional parameters used in the transmissivity profiles.</caption>
+<caption><span id="tab:hs-transmissivity-param">Table 4: </span> Additional parameters used in the transmissivity profiles.</caption>
 <thead>
 <tr class="header">
 <th>Symbol</th>
@@ -1070,6 +1165,340 @@ required. The additional parameter and properties are defined in Table <a href="
 </tr>
 </tbody>
 </table>
+</div>
+<div id="test-appendix-vpmc-v2" class="section level1">
+<h1>test appendix VPMC v2</h1>
+<p>Muskingham routing can be derived in a numer of ways. Consistent with the
+wedge derivation the evolution of the storage <span class="math inline">\(s\)</span> in a reach of length <span class="math inline">\(\Delta x\)</span> can be expressed in terms of the inflow <span class="math inline">\(q^{-}\)</span>
+and outflow <span class="math inline">\(q^{+}\)</span> and state or time varying parameter <span class="math inline">\(\nu\)</span> and <span class="math inline">\(\eta\)</span> as</p>
+<p><span class="math display">\[
+s = \frac{\Delta x}{\nu} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+\]</span></p>
+<p>Let the representave area <span class="math inline">\(a\)</span> be given by <span class="math inline">\(a=\frac{s}{\Delta x}\)</span>. If <span class="math inline">\(q = \eta q^{-} + \left(1-\eta\right) q^{+}\)</span> is a representative
+flow then <span class="math inline">\(\nu\)</span> is the representative velocity since <span class="math inline">\(\nu=\frac{q}{a}\)</span>.
+Below we show that in many hydrological settings that <span class="math inline">\(\eta\)</span> and <span class="math inline">\(q\)</span> are functions of
+<span class="math inline">\(a\)</span> and hence <span class="math inline">\(s\)</span>. In the following we therfore consider that
+<span class="math display">\[
+q^{+} = \mathcal{F}\left(s,q^{-}\right)
+\]</span>
+where
+<span class="math display">\[
+\frac{\partial q^{+}}{\partial s} = \frac{\partial}{\partial
+s}\mathcal{F}\left(s,q^{-}\right) \geq 0
+\]</span>
+and to maintain positive flows the value of <span class="math inline">\(s\)</span> is bounded below by <span class="math inline">\(s^{min}\)</span>
+such that
+<span class="math display">\[
+0 = \mathcal{F}\left(s^{min},q^{-}\right)
+\]</span></p>
+<p>Taking flux to be a function of cross sectional area and lateral inflow <span class="math inline">\(r\)</span>
+gives the mass balance</p>
+<p><span class="math display">\[
+\frac{ds}{dt} = q^{-} + r - q^{+}
+\]</span></p>
+<p>If the inputs an values at time <span class="math inline">\(t\)</span> are known the mass error for a four point solution with
+time weighting parameter <span class="math inline">\(\omega\)</span> is given by</p>
+<p><span class="math display">\[
+\mathcal{E}\left(s_{t+\Delta t},\omega\right) =
+s_{t+\Delta t} +
+\Delta t \left( \omega q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t}
+\right) -
+s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}
+\]</span></p>
+<p>where the ouflow volume <span class="math inline">\(v^{+}_{t + \Delta t}\)</span> is given by
+<span class="math display">\[
+v^{+}_{t + \Delta t} =
+\Delta t \left( \omega
+q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t} \right)
+\]</span></p>
+<p>to solve for the storage at time <span class="math inline">\(t+\Delta t\)</span> we seek the value of
+<span class="math inline">\(s_{t+\Delta t}\)</span> for which
+<span class="math inline">\(\mathcal{E}\left(s_{t+\Delta t},\omega\right) = 0\)</span>.</p>
+<p>Since
+<span class="math display">\[
+\frac{\partial}{\partial
+s}\mathcal{E}\left(s,\omega\right) &gt; 0
+\]</span>
+a solution can be found so long as <span class="math inline">\(\mathcal{E}\left(s^{min},\omega\right) \leq 0\)</span></p>
+<p>The solution is numerically stable so long as <span class="math inline">\(0.5 \leq \omega \leq 1\)</span> with second order accuray optained when $= 0.5. Since increasing
+<span class="math inline">\(\omega\)</span> adds numerical dispersion the solution uses the following cases:</p>
+<ol style="list-style-type: decimal">
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{min},0.5\right) \leq 0\)</span> find <span class="math inline">\(s_{t+\Delta t}\)</span> by
+numerical search</li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{min},0.5\right) &gt; 0\)</span> and
+<span class="math inline">\(\mathcal{E}\left(s^{min},1\right) \leq 0\)</span> set <span class="math inline">\(s_{t+\Delta t}=s^{min}\)</span> and
+compute
+<span class="math display">\[
+\omega =
+\frac{ s^{min} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
+v_{t+\Delta t}^{r}}{\Delta t q^{+}_{t}}
+\]</span></li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{min},1\right) &gt; 0\)</span> take <span class="math inline">\(\omega = 1\)</span>, <span class="math inline">\(q_{t+\Delta t}=0\)</span> and <span class="math inline">\(s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r}\)</span></li>
+</ol>
+<p>Case 3 represents the breakdown of the trapesoid assumption, resulting from a
+numeric shock to the system. The
+solution outlines offers a “smooth” mass conservative way of handling this,
+although it does not avoid suprious osscilations.</p>
+<div id="flux-limiters-for-tvd" class="section level2">
+<h2>Flux limiters for TVD</h2>
+<p>To avoid osscilations flux limiters can be proposed based upon the TVD
+principle (ref), specifically we constrain the solution such that <span class="math inline">\(q^{l}\leq q_{t+\Delta t} \leq q^{u}\)</span> where <span class="math inline">\(q^{l}\)</span> and <span class="math inline">\(q^{u}\)</span> are based on the known
+values at the start of the time step.</p>
+<p><span class="math display">\[
+q^{l} = \max\left(0, \min\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
++\min\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)\right)
+\]</span></p>
+<p><span class="math display">\[
+q^{u} = \max\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
++\max\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)
+\]</span></p>
+<p>Corresponding storages
+<span class="math display">\[
+q^{l} = \mathcal{F}\left(s^{l},q^{-}\right)
+\]</span>
+<span class="math display">\[
+q^{u} = \mathcal{F}\left(s^{u},q^{-}\right)
+\]</span></p>
+<p>Solve with multple cases</p>
+<ol start="0" style="list-style-type: decimal">
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{u},1\right) \leq 0\)</span> let <span class="math inline">\(q_{t+\Delta t}=q^{u}\)</span>, <span class="math inline">\(\omega = 1\)</span> and take
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r} - \Delta t q^{u}
+\]</span></li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{u},0.5\right) \leq 0\)</span> and
+<span class="math inline">\(\mathcal{E}\left(s^{u},1\right) &gt; 0\)</span> let
+<span class="math inline">\(q_{t+\Delta t}=q^{u}\)</span>,
+<span class="math inline">\(s_{t+\Delta t}=s^{u}\)</span> and compute
+<span class="math display">\[
+\omega =
+\frac{ s^{u} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
+v_{t+\Delta t}^{r}}
+{\Delta t \left( q^{+}_{t} - q^{u}\right)}
+\]</span></li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{l},0.5\right) &lt; 0\)</span> and
+<span class="math inline">\(\mathcal{E}\left(s^{u},0.5\right) &gt; 0\)</span> find <span class="math inline">\(s_{t+\Delta t}\)</span> by
+numerical search</li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{l},0.5\right) \geq 0\)</span> and
+<span class="math inline">\(\mathcal{E}\left(s^{l},1\right) \leq 0\)</span> set <span class="math inline">\(s_{t+\Delta t}=s^{l}\)</span> and
+compute
+<span class="math display">\[
+\omega =
+\frac{ s^{l} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}}{q^{+}_{t}}
+\]</span></li>
+<li>If <span class="math inline">\(\mathcal{E}\left(s^{l},1\right) &gt; 0\)</span> take <span class="math inline">\(\omega = 1\)</span>, <span class="math inline">\(q_{t+\Delta t}=q^{l}\)</span> and <span class="math inline">\(s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r} - \Delta t q^{l}\)</span></li>
+</ol>
+</div>
+</div>
+<div id="appendix-a---variable-parameter-muskingham-solution" class="section level1">
+<h1>Appendix A - Variable Parameter Muskingham solution</h1>
+<p>Muskingham routing can be derived in a numer of ways. Consistent with the
+wedge derivation the evolution of the storage <span class="math inline">\(s\)</span> in a reach of length <span class="math inline">\(\Delta x\)</span> can be expressed in terms of the cross sectional area of the inflow <span class="math inline">\(a^{-}\)</span>
+and outflow <span class="math inline">\(a^{+}\)</span> and possibly state or time varying parameter <span class="math inline">\(\eta\)</span> as
+<span class="math display">\[
+s = \Delta x \left(\eta a^{-} + \left(1-\eta\right) a^{+} \right)
+\]</span>
+Taking flux to be a function of cross sectional area and lateral inflow <span class="math inline">\(r\)</span>
+gives the mass balance</p>
+<p><span class="math display">\[
+\frac{ds}{dt} = q\left(a^{-}\right) + r - q\left(a^{+}\right)
+\]</span></p>
+<div id="approximating-tank-models" class="section level2">
+<h2>Approximating Tank Models</h2>
+<p>A tank model with possibly varying time constant <span class="math inline">\(T\)</span> has
+<span class="math display">\[
+q\left(a^{+}\right) = \frac{1}{T}s
+\]</span>.
+This is a special case of the solution with <span class="math inline">\(\eta=0\)</span> so that
+<span class="math inline">\(s=a^{+} \Delta x\)</span></p>
+</div>
+<div id="approximating-diffusion-wave-routing" class="section level2">
+<h2>Approximating Diffusion Wave Routing</h2>
+<p>Diffuse routing with lateral inflow can be expressed as the parabolic
+equation </p>
+<p><span class="math display">\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
+\]</span>
+where <span class="math inline">\(l\)</span> is lateral inflow per unit length. Simplify this by
+considering that the lateral inflow <span class="math inline">\(r\)</span> uniformly
+distributed so that <span class="math inline">\(l=\frac{r}{\Delta x}\)</span> and <span class="math inline">\(\frac{dl}{dx}=0\)</span> to give</p>
+<p><span class="math display">\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
+\]</span></p>
+<p>Let us relate this to the Muskingham Solution using the relationship
+<span class="math display">\[
+a = \eta a^{-} + \left(1-\eta\right) a^{+}
+\]</span></p>
+<p>Taking Taylor series expansions for <span class="math inline">\(q\left(a^{-}\right)\)</span> and
+<span class="math inline">\(q\left(a^{+}\right)\)</span> based on <span class="math inline">\(a\)</span> gives</p>
+<p><span class="math display">\[
+q\left(a^{+}\right) \approx q\left(a\right) + \eta \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
+\]</span>
+and
+<span class="math display">\[
+q\left(a^{-}\right) \approx q\left(a\right) - \left(1-\eta\right) \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
+\]</span></p>
+<p>Subtracting the expression for <span class="math inline">\(q\left(a^{-}\right)\)</span> from that for <span class="math inline">\(q\left(a^{+}\right)\)</span> gives</p>
+<p><span class="math display">\[
+q\left(a^{-}\right) - q\left(a^{+}\right) \approx
+-\Delta x \frac{dq\left(a\right)}{dx} +
+\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
+\]</span></p>
+<p>From the mass balance condition
+<span class="math display">\[
+\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq\left(a\right)}{dx} +
+\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
+\]</span></p>
+<p>Using the expression for storage and relationship between flow and area
+<span class="math display">\[
+\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
+\]</span></p>
+<p>Then combinign this with the approximation produces
+<span class="math display">\[
+\frac{dq\left(a\right)}{dt} + c\frac{dq\left(a\right)}{dx} -
+\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q\left(a\right)}{dx^2}
+\approx c l
+\]</span></p>
+<p>Comparision to the orginal diffuse routing equation shows that
+<span class="math display">\[
+\eta = \frac{1}{2} - \frac{D}{c \Delta x}
+\]</span></p>
+<p>The value of <span class="math inline">\(\eta\)</span> is limited to between 0 and <span class="math inline">\(\frac{1}{2}\)</span>. Firstly <span class="math inline">\(\eta = 1/2\)</span> results from <span class="math inline">\(D=0\)</span>; that is the Kinematic wave equation. Taking <span class="math inline">\(\eta=0\)</span>
+produces the maxium dispersion of <span class="math inline">\(D = \frac{c\Delta x}{2}\)</span>, which is given by
+the linear tank.</p>
+</div>
+<div id="numerical-solution-1" class="section level2">
+<h2>Numerical Solution</h2>
+<p><strong>SEARCH WITH <span class="math inline">\(a^{+}\)</span> </strong></p>
+<p>Consider first the case with:</p>
+<ul>
+<li>a known constant value of <span class="math inline">\(\eta\)</span></li>
+<li>a known positive inflow <span class="math inline">\(q\left(a^{-}_{t+\Delta t}\right)\)</span> giving a value of
+<span class="math inline">\(a^{-}_{t+\Delta t}\)</span></li>
+<li>a known function <span class="math inline">\(q\)</span> such that <span class="math inline">\(\frac{dq\left(a\right)}{da}\geq 0\)</span> and
+<span class="math inline">\(q\left(0\right)=0\)</span></li>
+</ul>
+<p>An implicit
+solution gives the joint equations
+<span class="math display">\[
+s_{t+\Delta t} = \Delta x \left(\eta a^{-}_{t+\Delta t} + \left(1-\eta\right)
+a^{+}_{t+\Delta t} \right)
+\]</span>
+and
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(a^{+}_{t+\Delta t}\right) \right)
+\]</span></p>
+<p>The unknown outflow crossection satisfies <span class="math inline">\(a^{+}_{t+\Delta t} \geq 0\)</span>. The first
+expression for <span class="math inline">\(s_{t+\Delta t}\)</span> is strictly increasing with respect to
+<span class="math inline">\(a^{+}_{t+\Delta t}\)</span> while the second is decreasing, hence there is a unique
+solution for <span class="math inline">\(a^{+}_{t+\Delta t}\)</span> so long as
+<span class="math display">\[
+\Delta x \eta a^{-}_{t+\Delta t} \leq s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]</span>
+Failure of this condition represents a breakdown of the trapeziod
+approximation. This is handled by taking <span class="math inline">\(q\left(a^{+}_{t+\Delta t}\right)=0\)</span>
+and
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]</span>
+From this we see that
+<span class="math display">\[
+-r \leq \frac{1}{\Delta t} s_{t} + q\left(a^{-}_{t+Δt}\right) - \frac{\Delta
+x}{\Delta t} \eta a^{-}_{t+\Delta t}
+\]</span></p>
+<p>A more general numeric scheme is the following
+process</p>
+<ul>
+<li>select trial <span class="math inline">\(\hat{s}\)</span></li>
+<li>compute <span class="math inline">\(\hat{a} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{s} - \Delta x \eta a^{-}_{t+\Delta t}\right)\right)\)</span></li>
+<li>evaluate <span class="math inline">\(e = \hat{s} - s_{t} - \Delta t \left(q\left(a^{-}_{t+\Delta t}\right) + r_{t+\Delta t} - q\left(\hat{a}\right)\right)\)</span></li>
+</ul>
+<p>then search to find <span class="math inline">\(e=0\)</span></p>
+<p>Note that <span class="math inline">\(\frac{de}{d\hat{s}} = 1 + \frac{dq}{da}\frac{da}{d\hat{s}} &gt; 0\)</span> and
+<span class="math inline">\(\hat{s}=0\)</span> implies <span class="math inline">\(\hat{a} = 0\)</span> hence <span class="math inline">\(e \leq 0\)</span> so there is a single
+solution.</p>
+</div>
+<div id="solution-for-saturated-zone" class="section level2">
+<h2>Solution for saturated zone</h2>
+<p>Buildin on the above let the storage deficit be <span class="math inline">\(z\)</span> and area deficit be <span class="math inline">\(v\)</span> is
+is simple to see that
+solution gives the joint equations
+<span class="math display">\[
+z_{t+\Delta t} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right)
+v^{+}_{t+\Delta t} \right)
+\]</span>
+and
+<span class="math display">\[
+z_{t+\Delta t} = z_{t} - \Delta t \left( q\left(v^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(v^{+}_{t+\Delta t}\right) \right)
+\]</span></p>
+<p>where now <span class="math inline">\(q\left(v\right) \rightarrow 0\)</span> as <span class="math inline">\(v \rightarrow \infty\)</span> and
+<span class="math inline">\(\frac{dq}{dv} \leq 0\)</span>.</p>
+<p>Subsituting in the expression
+<span class="math display">\[
+r_{t+\Delta{ t}} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}z_{t+\Delta t} +
+\Delta t} \right)
+\]</span></p>
+<p>Gives a similar numeric scheme to that previously</p>
+<ul>
+<li>select trial <span class="math inline">\(\hat{q}\)</span></li>
+<li>compute <span class="math inline">\(\hat{v} = q^{-1}\left(\hat{q}\right)\)</span></li>
+<li>compute <span class="math inline">\(hat{z} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right) \hat{v} \right)\)</span></li>
+<li>compute <span class="math inline">\(\hat{r} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}\hat{z} + \Delta t} \right)\)</span></li>
+<li>evaluate <span class="math inline">\(e = \hat{z} - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) + \hat{r} - q\left(\hat{v}\right)\right)\)</span></li>
+</ul>
+<p>and search for <span class="math inline">\(e=0\)</span>.</p>
+<p>The derivative <span class="math inline">\(\frac{de}{d\hat{z}} = 1 + \frac{d\hat{r}}{dz -  }\frac{dq}{dv}\frac{dv}{d\hat{z}} &gt; 0\)</span>. <em>TODO based on proof below</em>
+For a unique solution <span class="math inline">\(e \leq 0\)</span> for <span class="math inline">\(hat{s}=0\)</span>. if this is not the case need
+to limit <span class="math inline">\(\hat{r}\)</span>
+[
+e = 0 - z_{t} +t (q(a^{-}_{t+t}) +
+)$</p>
+<p>and
+<span class="math inline">\(\hat{s}=0\)</span> implies <span class="math inline">\(\hat{a} = 0\)</span> hence <span class="math inline">\(e \leq 0\)</span> so there is a single
+solution.</p>
+<p>meaning that
+<span class="math display">\[
+s_{t+\Delta t} \geq \Delta x \eta a^{-}_{t+\Delta t}
+\]</span></p>
+<p>Letting <span class="math inline">\(\frac{dq\left(a\right)}{da}\geq 0\)</span> and <span class="math inline">\(q\left(0\right)=0\)</span> gives
+<span class="math display">\[
+s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}  \right)
+\geq \Delta x \eta a^{-}_{t+\Delta t}
+\]</span></p>
+<p>Assuming <span class="math inline">\(\eta\)</span> and <span class="math inline">\(\kappa\)</span> are constant over the time window <span class="math inline">\(\Delta t\)</span> this
+gives the solution</p>
+<p><span class="math display">\[
+\left. s \right.\rvert_{t + \Delta t} =
+\frac{ \kappa\left(1-\eta\right) }{ \kappa\left(1-\eta\right) + \Delta t }
+\left( \left. s \right.\rvert_{t} + \frac{\Delta t}{1-\eta} \left. q^{-}
+\right.\rvert_{t + \Delta t} + \Delta t \left. r
+\right.\rvert_{t + \Delta t} \right)
+\]</span></p>
+<p>By derivation this scheme is mass conservative. The final state is positive when the bracket term is positive. The outflow is given by</p>
+<p><span class="math display">\[
+\Delta t \left.q^{+}\right.\rvert_{t + \Delta t} =
+\left. s \right.\rvert_{t} +
+\Delta t \left. q^{-} \right.\rvert_{t + \Delta t} +
+\Delta t \left. r \right.\rvert_{t + \Delta t} -
+\left. s \right.\rvert_{t + \Delta t}
+\]</span></p>
+<p>Subsituting in the expression for <span class="math inline">\(\left. s \right.\rvert_{t + \Delta t}\)</span>
+gives</p>
+<p><span class="math display">\[
+\left.q^{+}\right.\rvert_{t + \Delta t} =
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t }
+\left. s \right.\rvert_{t} +
+\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t }
+\left. q^{-} \right.\rvert_{t + \Delta t} +
+\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t }
+\left. r \right.\rvert_{t + \Delta t}
+\]</span></p>
+<p>Further manipulations indicates that <span class="math inline">\(\left.q^{+}\right.\rvert_{t + \Delta t} \geq 0\)</span> requires <span class="math inline">\(\Delta t \geq \kappa\eta\)</span>. <em>TODO - show these</em></p>
+</div>
 </div>
 <div id="appendix-a---monotonicity-of-fleftzright" class="section level1">
 <h1>Appendix A - Monotonicity of <span class="math inline">\(f\left(z\right)\)</span></h1>

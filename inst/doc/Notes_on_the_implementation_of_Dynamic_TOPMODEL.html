@@ -14,22 +14,6 @@
 
 <title>Notes on the implementation of Dynamic TOPMODEL</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -243,12 +227,12 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="TOC">
 <ul>
-<li><a href="#the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes</a></li>
-<li><a href="#input-series">Input Series</a></li>
-<li><a href="#miscellaneous-coding-comments">Miscellaneous Coding comments</a>
+<li><a href="#the-solution-order-of-hrus-and-exchange-of-fluxes" id="toc-the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes</a></li>
+<li><a href="#input-series" id="toc-input-series">Input Series</a></li>
+<li><a href="#miscellaneous-coding-comments" id="toc-miscellaneous-coding-comments">Miscellaneous Coding comments</a>
 <ul>
-<li><a href="#relating-the-vignette-notation-and-code-variables">Relating the vignette notation and code variables</a></li>
-<li><a href="#numerical-solutions">Numerical solutions</a></li>
+<li><a href="#relating-the-vignette-notation-and-code-variables" id="toc-relating-the-vignette-notation-and-code-variables">Relating the vignette notation and code variables</a></li>
+<li><a href="#numerical-solutions" id="toc-numerical-solutions">Numerical solutions</a></li>
 </ul></li>
 </ul>
 </div>

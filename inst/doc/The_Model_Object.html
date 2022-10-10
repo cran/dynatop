@@ -14,22 +14,6 @@
 
 <title>The Model Object</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -54,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -88,7 +73,7 @@ code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -101,7 +86,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -122,13 +107,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -337,15 +329,15 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="TOC">
 <ul>
-<li><a href="#options">Options</a></li>
-<li><a href="#hillslope-hru-table">Hillslope HRU table</a></li>
-<li><a href="#channel-hru-table">Channel HRU table</a></li>
-<li><a href="#gauge-locations">Gauge locations</a></li>
-<li><a href="#point-inflows">Point Inflows</a></li>
-<li><a href="#diffuse-inflows">Diffuse Inflows</a></li>
-<li><a href="#flow-direction">Flow direction</a></li>
-<li><a href="#precipitation-input">Precipitation input</a></li>
-<li><a href="#pet-input">PET input</a></li>
+<li><a href="#options" id="toc-options">Options</a></li>
+<li><a href="#hillslope-hru-table" id="toc-hillslope-hru-table">Hillslope HRU table</a></li>
+<li><a href="#channel-hru-table" id="toc-channel-hru-table">Channel HRU table</a></li>
+<li><a href="#gauge-locations" id="toc-gauge-locations">Gauge locations</a></li>
+<li><a href="#point-inflows" id="toc-point-inflows">Point Inflows</a></li>
+<li><a href="#diffuse-inflows" id="toc-diffuse-inflows">Diffuse Inflows</a></li>
+<li><a href="#flow-direction" id="toc-flow-direction">Flow direction</a></li>
+<li><a href="#precipitation-input" id="toc-precipitation-input">Precipitation input</a></li>
+<li><a href="#pet-input" id="toc-pet-input">PET input</a></li>
 </ul>
 </div>
 
@@ -359,22 +351,22 @@ Started”</a> vignette which demonstrates the manipulation and use
 of a model object.</p>
 <p>The model structure will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(dynatop)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">data</span>(<span class="st">&quot;Swindale&quot;</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a>model &lt;-<span class="st"> </span>Swindale<span class="op">$</span>model</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dynatop)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Swindale&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> Swindale<span class="sc">$</span>model</span></code></pre></div>
 <p>The top level of the model contains the following elements:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">names</span>(model)</span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt;  [1] &quot;options&quot;        &quot;map&quot;            &quot;channel&quot;        &quot;hillslope&quot;     </span></span>
-<span id="cb2-3"><a href="#cb2-3"></a><span class="co">#&gt;  [5] &quot;flow_direction&quot; &quot;gauge&quot;          &quot;point_inflow&quot;   &quot;diffuse_inflow&quot;</span></span>
-<span id="cb2-4"><a href="#cb2-4"></a><span class="co">#&gt;  [9] &quot;precip_input&quot;   &quot;pet_input&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(model)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] &quot;options&quot;        &quot;map&quot;            &quot;channel&quot;        &quot;hillslope&quot;     </span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [5] &quot;flow_direction&quot; &quot;gauge&quot;          &quot;point_inflow&quot;   &quot;diffuse_inflow&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [9] &quot;precip_input&quot;   &quot;pet_input&quot;</span></span></code></pre></div>
 <p>These are outlined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
 below.</p>
 <table>
 <caption><span id="tab:model-table">Table 1: </span> Description of top-level model components</caption>
 <colgroup>
-<col width="25%"></col>
-<col width="25%"></col>
-<col width="50%"></col>
+<col width="25%" />
+<col width="25%" />
+<col width="50%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -454,36 +446,36 @@ vignettes for further details.</p>
 <div id="hillslope-hru-table" class="section level2">
 <h2>Hillslope HRU table</h2>
 <p>Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">head</span>(model<span class="op">$</span>hillslope)</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440   NA   NA   NA   NA</span></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640   NA   NA   NA   NA</span></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320   NA   NA   NA   NA</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040   NA   NA   NA   NA</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt;   cls_atb_20_band cls_atb_20 cls_band opt r_sfmax c_sf s_rzmax  t_d ln_t0 c_sz</span></span>
-<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 1               1          1        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt; 2               2          2        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 3               3          3        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a><span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-14"><a href="#cb3-14"></a><span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0 s_raf t_raf</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a><span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a><span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
-<span id="cb3-19"><a href="#cb3-19"></a><span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
-<span id="cb3-20"><a href="#cb3-20"></a><span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a><span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
-<span id="cb3-22"><a href="#cb3-22"></a><span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model<span class="sc">$</span>hillslope)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440   NA   NA   NA   NA</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640   NA   NA   NA   NA</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320   NA   NA   NA   NA</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040   NA   NA   NA   NA</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   cls_atb_20_band cls_atb_20 cls_band opt r_sfmax c_sf s_rzmax  t_d ln_t0 c_sz</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1               1          1        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2               2          2        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3               3          3        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0 s_raf t_raf</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. Not all the parameters are relevant for each option. See the Hillslope HRU vignette for details.</p>
 <table>
 <caption><span id="tab:hillslope-table">Table 2: </span> Description of hillslope data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -638,44 +630,44 @@ vignettes for further details.</p>
 <div id="channel-hru-table" class="section level2">
 <h2>Channel HRU table</h2>
 <p>Each row of the channel HRU table describes a single channel HRU. In this example it looks like:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">head</span>(model<span class="op">$</span>channel)</span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt;                  name1                           identifier</span></span>
-<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span></span>
-<span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt; 2        Mosedale Beck D2C2703E-A32F-4D88-A022-4E27EA52FC5C</span></span>
-<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt; 3                 &lt;NA&gt; 991D9896-CA0C-492F-A6EE-8BA3972DDA3C</span></span>
-<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt; 4                 &lt;NA&gt; CC8639D7-00D2-4C26-9252-350E5A748D51</span></span>
-<span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt; 5                 &lt;NA&gt; ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182</span></span>
-<span id="cb4-9"><a href="#cb4-9"></a><span class="co">#&gt;                              startNode                              endNode</span></span>
-<span id="cb4-10"><a href="#cb4-10"></a><span class="co">#&gt; 0 730F01D2-0F4F-4E27-AF55-B1782F0F844B 72B1A40B-E106-42A9-A261-4B7720037ADB</span></span>
-<span id="cb4-11"><a href="#cb4-11"></a><span class="co">#&gt; 1 9B06188C-F4C7-436C-8108-3956D5FFD5CD A19E0D3A-2FA1-4E6D-AEA4-472F91ABC2AC</span></span>
-<span id="cb4-12"><a href="#cb4-12"></a><span class="co">#&gt; 2 B03DB3BD-0E33-4E10-A935-997832752609 D649B60C-E631-47FA-971E-CA388DBDDE63</span></span>
-<span id="cb4-13"><a href="#cb4-13"></a><span class="co">#&gt; 3 D968F174-FB80-404A-A4A7-2862CC722482 1FDBFCFF-799C-41CF-A2CB-8A56368BD438</span></span>
-<span id="cb4-14"><a href="#cb4-14"></a><span class="co">#&gt; 4 1FDBFCFF-799C-41CF-A2CB-8A56368BD438 7C251581-3764-4DEE-8031-EC98FABC1F87</span></span>
-<span id="cb4-15"><a href="#cb4-15"></a><span class="co">#&gt; 5 D3A1AEA9-93A6-4ACF-9A11-363F9517723F 673269DF-9E48-4EA0-B439-3D565A023DD2</span></span>
-<span id="cb4-16"><a href="#cb4-16"></a><span class="co">#&gt;          form         flow fictitious length name2 sinkdepth Shape_Leng width</span></span>
-<span id="cb4-17"><a href="#cb4-17"></a><span class="co">#&gt; 0 inlandRiver in direction      false    431  &lt;NA&gt;        -1  431.30438     2</span></span>
-<span id="cb4-18"><a href="#cb4-18"></a><span class="co">#&gt; 1 inlandRiver in direction      false    513  &lt;NA&gt;        -1  513.12806     2</span></span>
-<span id="cb4-19"><a href="#cb4-19"></a><span class="co">#&gt; 2 inlandRiver in direction      false    740  &lt;NA&gt;        -1  739.76378     2</span></span>
-<span id="cb4-20"><a href="#cb4-20"></a><span class="co">#&gt; 3 inlandRiver in direction      false    573  &lt;NA&gt;        -1  573.48312     2</span></span>
-<span id="cb4-21"><a href="#cb4-21"></a><span class="co">#&gt; 4 inlandRiver in direction      false     29  &lt;NA&gt;        -1   29.18951     2</span></span>
-<span id="cb4-22"><a href="#cb4-22"></a><span class="co">#&gt; 5 inlandRiver in direction      false    413  &lt;NA&gt;        -1  413.14877     2</span></span>
-<span id="cb4-23"><a href="#cb4-23"></a><span class="co">#&gt;                             channel_id id area v_ch</span></span>
-<span id="cb4-24"><a href="#cb4-24"></a><span class="co">#&gt; 0 16D0AC09-E0B6-4727-83B8-567E8DE9C533  2   24    1</span></span>
-<span id="cb4-25"><a href="#cb4-25"></a><span class="co">#&gt; 1 643017BB-01BC-4738-898F-1C62B84164BF 17  255    1</span></span>
-<span id="cb4-26"><a href="#cb4-26"></a><span class="co">#&gt; 2 D2C2703E-A32F-4D88-A022-4E27EA52FC5C 11  242    1</span></span>
-<span id="cb4-27"><a href="#cb4-27"></a><span class="co">#&gt; 3 991D9896-CA0C-492F-A6EE-8BA3972DDA3C  7  126    1</span></span>
-<span id="cb4-28"><a href="#cb4-28"></a><span class="co">#&gt; 4 CC8639D7-00D2-4C26-9252-350E5A748D51  6    6    1</span></span>
-<span id="cb4-29"><a href="#cb4-29"></a><span class="co">#&gt; 5 ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182 12  168    1</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model<span class="sc">$</span>channel)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  name1                           identifier</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        Mosedale Beck D2C2703E-A32F-4D88-A022-4E27EA52FC5C</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3                 &lt;NA&gt; 991D9896-CA0C-492F-A6EE-8BA3972DDA3C</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4                 &lt;NA&gt; CC8639D7-00D2-4C26-9252-350E5A748D51</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5                 &lt;NA&gt; ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                              startNode                              endNode</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0 730F01D2-0F4F-4E27-AF55-B1782F0F844B 72B1A40B-E106-42A9-A261-4B7720037ADB</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 9B06188C-F4C7-436C-8108-3956D5FFD5CD A19E0D3A-2FA1-4E6D-AEA4-472F91ABC2AC</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 B03DB3BD-0E33-4E10-A935-997832752609 D649B60C-E631-47FA-971E-CA388DBDDE63</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 D968F174-FB80-404A-A4A7-2862CC722482 1FDBFCFF-799C-41CF-A2CB-8A56368BD438</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 1FDBFCFF-799C-41CF-A2CB-8A56368BD438 7C251581-3764-4DEE-8031-EC98FABC1F87</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 D3A1AEA9-93A6-4ACF-9A11-363F9517723F 673269DF-9E48-4EA0-B439-3D565A023DD2</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          form         flow fictitious length name2 sinkdepth Shape_Leng width</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0 inlandRiver in direction      false    431  &lt;NA&gt;        -1  431.30438     2</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 inlandRiver in direction      false    513  &lt;NA&gt;        -1  513.12806     2</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 inlandRiver in direction      false    740  &lt;NA&gt;        -1  739.76378     2</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 inlandRiver in direction      false    573  &lt;NA&gt;        -1  573.48312     2</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 inlandRiver in direction      false     29  &lt;NA&gt;        -1   29.18951     2</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 inlandRiver in direction      false    413  &lt;NA&gt;        -1  413.14877     2</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                             channel_id id area v_ch</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0 16D0AC09-E0B6-4727-83B8-567E8DE9C533  2   24    1</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 643017BB-01BC-4738-898F-1C62B84164BF 17  255    1</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 D2C2703E-A32F-4D88-A022-4E27EA52FC5C 11  242    1</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 991D9896-CA0C-492F-A6EE-8BA3972DDA3C  7  126    1</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 CC8639D7-00D2-4C26-9252-350E5A748D51  6    6    1</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182 12  168    1</span></span></code></pre></div>
 <p>Many of the columns are not needed and are passed through from the original
 data. The columns required are documented in Table <a href="#tab:channel-table">3</a>.</p>
 <table>
 <caption><span id="tab:channel-table">Table 3: </span> Description of channel data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -720,10 +712,10 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 <table>
 <caption><span id="tab:gauge-table">Table 4: </span> Description of gauge data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -749,9 +741,9 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 </tbody>
 </table>
 <p>In this case there is a single gauge at the outlet:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>model<span class="op">$</span>gauge</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt;        name id</span></span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt; 1 channel_1  1</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model<span class="sc">$</span>gauge</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        name id</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 channel_1  1</span></span></code></pre></div>
 </div>
 <div id="point-inflows" class="section level2">
 <h2>Point Inflows</h2>
@@ -759,6 +751,12 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 are added to the inflow at the head of the channel length.</p>
 <table>
 <caption><span id="tab:point-inflow-table">Table 5: </span> Description of point_inflow data frame columns</caption>
+<colgroup>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -783,9 +781,9 @@ are added to the inflow at the head of the channel length.</p>
 </tbody>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>model<span class="op">$</span>point_inflow</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; [1] name id  </span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model<span class="sc">$</span>point_inflow</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] name id  </span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
 </div>
 <div id="diffuse-inflows" class="section level2">
 <h2>Diffuse Inflows</h2>
@@ -793,6 +791,12 @@ are added to the inflow at the head of the channel length.</p>
 the channel. These are presumed to occur uniformly along the channel length.</p>
 <table>
 <caption><span id="tab:diffuse-inflow-table">Table 6: </span> Description of diffuse_inflow data frame columns</caption>
+<colgroup>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -817,9 +821,9 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 </tbody>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>model<span class="op">$</span>diffuse_inflow</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; [1] name id  </span></span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>model<span class="sc">$</span>diffuse_inflow</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] name id  </span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
 </div>
 <div id="flow-direction" class="section level2">
 <h2>Flow direction</h2>
@@ -827,10 +831,10 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <table>
 <caption><span id="tab:flow-direction-table">Table 7: </span> Description of flow_direction data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -862,14 +866,14 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 </tbody>
 </table>
 <p>The start of the data frame in the current example is:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">head</span>(model<span class="op">$</span>flow_direction)</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt;        from   to       frc</span></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; 18502  1853 1850 0.3033095</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#&gt; 185110 1853 1851 0.4704486</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt; 1852   1853 1852 0.2262419</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="co">#&gt; 18492  1852 1849 0.3781666</span></span>
-<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt; 18501  1852 1850 0.4736997</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a><span class="co">#&gt; 1851   1852 1851 0.1481338</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model<span class="sc">$</span>flow_direction)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        from   to       frc</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18502  1853 1850 0.3033095</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 185110 1853 1851 0.4704486</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1852   1853 1852 0.2262419</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18492  1852 1849 0.3781666</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18501  1852 1850 0.4736997</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1851   1852 1851 0.1481338</span></span></code></pre></div>
 </div>
 <div id="precipitation-input" class="section level2">
 <h2>Precipitation input</h2>
@@ -880,10 +884,10 @@ for each HRU is derived.</p>
 <table>
 <caption><span id="tab:precip-input-table">Table 8: </span> Description of precip_input data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -915,14 +919,14 @@ for each HRU is derived.</p>
 </tbody>
 </table>
 <p>In the current example there is a single precipitation series being used:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">head</span>(model<span class="op">$</span>precip_input)</span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="co">#&gt;       name id frc</span></span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="co">#&gt; 1 Rainfall  2   1</span></span>
-<span id="cb9-4"><a href="#cb9-4"></a><span class="co">#&gt; 2 Rainfall 17   1</span></span>
-<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#&gt; 3 Rainfall 11   1</span></span>
-<span id="cb9-6"><a href="#cb9-6"></a><span class="co">#&gt; 4 Rainfall  7   1</span></span>
-<span id="cb9-7"><a href="#cb9-7"></a><span class="co">#&gt; 5 Rainfall  6   1</span></span>
-<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt; 6 Rainfall 12   1</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model<span class="sc">$</span>precip_input)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       name id frc</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Rainfall  2   1</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 Rainfall 17   1</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 Rainfall 11   1</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 Rainfall  7   1</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 Rainfall  6   1</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 Rainfall 12   1</span></span></code></pre></div>
 </div>
 <div id="pet-input" class="section level2">
 <h2>PET input</h2>
@@ -933,10 +937,10 @@ for each HRU is derived.</p>
 <table>
 <caption><span id="tab:pet-input-table">Table 9: </span> Description of pet_input data frame columns</caption>
 <colgroup>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="21%"></col>
-<col width="35%"></col>
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="35%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -968,14 +972,14 @@ for each HRU is derived.</p>
 </tbody>
 </table>
 <p>In the current example there is a single PET series being used:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">head</span>(model<span class="op">$</span>pet_input)</span>
-<span id="cb10-2"><a href="#cb10-2"></a><span class="co">#&gt;   name id frc</span></span>
-<span id="cb10-3"><a href="#cb10-3"></a><span class="co">#&gt; 1  PET  2   1</span></span>
-<span id="cb10-4"><a href="#cb10-4"></a><span class="co">#&gt; 2  PET 17   1</span></span>
-<span id="cb10-5"><a href="#cb10-5"></a><span class="co">#&gt; 3  PET 11   1</span></span>
-<span id="cb10-6"><a href="#cb10-6"></a><span class="co">#&gt; 4  PET  7   1</span></span>
-<span id="cb10-7"><a href="#cb10-7"></a><span class="co">#&gt; 5  PET  6   1</span></span>
-<span id="cb10-8"><a href="#cb10-8"></a><span class="co">#&gt; 6  PET 12   1</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model<span class="sc">$</span>pet_input)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   name id frc</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  PET  2   1</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  PET 17   1</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  PET 11   1</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  PET  7   1</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  PET  6   1</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6  PET 12   1</span></span></code></pre></div>
 </div>
 
 

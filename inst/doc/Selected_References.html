@@ -27,22 +27,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -255,22 +239,39 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<p>The following is a selected list of references relating to Dynamic TOPMODEL, in implementation in R and interesting applications.</p>
+<p>The following is a selected list of references relating to Dynamic
+TOPMODEL, in implementation in R and interesting applications.</p>
 <div id="the-basis-of-dynamic-topmodel" class="section level1">
 <h1>The basis of Dynamic TOPMODEL</h1>
-<p><span class="citation">Keith Beven and Jim Freer, “A Dynamic Topmodel,” <em>Hydrological Processes</em> 15, no. 10 (2001): 1993–2011, <a href="https://doi.org/10.1002/hyp.252" role="doc-biblioref">https://doi.org/10.1002/hyp.252</a>.</span></p>
+<p><span class="citation">Keith Beven and Jim Freer, <span>“A Dynamic
+TOPMODEL,”</span> <em>Hydrological Processes</em> 15, no. 10 (2001):
+1993–2011, <a href="https://doi.org/10.1002/hyp.252" role="doc-biblioref">https://doi.org/10.1002/hyp.252</a>.</span></p>
 </div>
 <div id="implementations-in-r" class="section level1">
 <h1>Implementations in R</h1>
-<p><span class="citation">Peter Metcalfe, Keith Beven, and Jim Freer, “Dynamic Topmodel: A New Implementation in R and Its Sensitivity to Time and Space Steps,” <em>Environmental Modelling &amp; Software</em> 72 (2015): 155–72, <a href="https://doi.org/10.1016/j.envsoft.2015.06.010" role="doc-biblioref">https://doi.org/10.1016/j.envsoft.2015.06.010</a>.</span></p>
+<p><span class="citation">Peter Metcalfe, Keith Beven, and Jim Freer,
+<span>“Dynamic TOPMODEL: A New Implementation in r and Its Sensitivity
+to Time and Space Steps,”</span> <em>Environmental Modelling &amp;
+Software</em> 72 (2015): 155–72, <a href="https://doi.org/10.1016/j.envsoft.2015.06.010" role="doc-biblioref">https://doi.org/10.1016/j.envsoft.2015.06.010</a>.</span></p>
 </div>
 <div id="applications" class="section level1">
 <h1>Applications</h1>
 <div id="natural-flood-management" class="section level2">
 <h2>Natural Flood Management</h2>
-<p><span class="citation">Peter Metcalfe et al., “A Modelling Framework for Evaluation of the Hydrological Impacts of Nature-Based Approaches to Flood Risk Management, with Application to in-Channel Interventions Across a 29-Km2 Scale Catchment in the United Kingdom,” <em>Hydrological Processes</em> 31, no. 9 (March 2017): 1734–48, <a href="https://doi.org/10.1002/hyp.11140" role="doc-biblioref">https://doi.org/10.1002/hyp.11140</a>.</span></p>
-<p><span class="citation">P. Metcalfe et al., “A New Method, with Application, for Analysis of the Impacts on Flood Risk of Widely Distributed Enhanced Hillslope Storage,” <em>Hydrology and Earth System Sciences</em> 22, no. 4 (2018): 2589–2605, <a href="https://doi.org/10.5194/hess-22-2589-2018" role="doc-biblioref">https://doi.org/10.5194/hess-22-2589-2018</a>.</span></p>
-<p><span class="citation">Peter Metcalfe et al., “A New Method, with Application, for Analysis of the Impacts on Flood Risk of Widely Distributed Enhanced Hillslope Storage,” <em>Hydrology and Earth System Sciences</em> 22, no. 4 (April 2018): 2589–2605, <a href="https://doi.org/10.5194/hess-22-2589-2018" role="doc-biblioref">https://doi.org/10.5194/hess-22-2589-2018</a>.</span></p>
+<p><span class="citation">Peter Metcalfe et al., <span>“A Modelling
+Framework for Evaluation of the Hydrological Impacts of Nature-Based
+Approaches to Flood Risk Management, with Application to in-Channel
+Interventions Across a 29-Km2 Scale Catchment in the United
+Kingdom,”</span> <em>Hydrological Processes</em> 31, no. 9 (March 2017):
+1734–48, <a href="https://doi.org/10.1002/hyp.11140" role="doc-biblioref">https://doi.org/10.1002/hyp.11140</a>.</span></p>
+<p><span class="citation">P. Metcalfe et al., <span>“A New Method, with
+Application, for Analysis of the Impacts on Flood Risk of Widely
+Distributed Enhanced Hillslope Storage,”</span> <em>Hydrology and Earth
+System Sciences</em> 22, no. 4 (2018): 2589–2605, <a href="https://doi.org/10.5194/hess-22-2589-2018" role="doc-biblioref">https://doi.org/10.5194/hess-22-2589-2018</a>.</span></p>
+<p><span class="citation">Peter Metcalfe et al., <span>“A New Method,
+with Application, for Analysis of the Impacts on Flood Risk of Widely
+Distributed Enhanced Hillslope Storage,”</span> <em>Hydrology and Earth
+System Sciences</em> 22, no. 4 (April 2018): 2589–2605, <a href="https://doi.org/10.5194/hess-22-2589-2018" role="doc-biblioref">https://doi.org/10.5194/hess-22-2589-2018</a>.</span></p>
 </div>
 </div>
 
