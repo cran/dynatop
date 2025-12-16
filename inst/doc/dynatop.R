@@ -1,10 +1,10 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ---- setup-------------------------------------------------------------------
+## ----setup--------------------------------------------------------------------
 library(dynatop)
 data("Swindale")
 
@@ -23,14 +23,14 @@ swindale_model$map$hillslope <- system.file("extdata","Swindale.tif",package="dy
 swindale_model$map$channel <- system.file("extdata","channel.shp",package="dynatop",mustWork=TRUE)
 swindale_model$map$channel_id <- system.file("extdata","channel_id.tif",package="dynatop",mustWork=TRUE)
 
-## ---- obs---------------------------------------------------------------------
+## ----obs----------------------------------------------------------------------
 head(swindale_obs)
 
-## ---- set_obs_names-----------------------------------------------------------
+## ----set_obs_names------------------------------------------------------------
 head(swindale_model$precip_input)
 head(swindale_model$pet_input)
 
-## ---- change_param------------------------------------------------------------
+## ----change_param-------------------------------------------------------------
 swindale_model$hillslope$r_sfmax <- Inf
 swindale_model$hillslope$m <- 0.0063
 swindale_model$hillslope$ln_t0 <- 7.46
